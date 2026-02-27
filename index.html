@@ -14,7 +14,8 @@
         .option:has(input:checked) { border-color: #00B900; background-color: #f0fff0; }
         .option input { margin-right: 15px; transform: scale(1.4); }
         .btn { display: block; width: 100%; padding: 16px; background: #00B900; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; margin-top: 25px; cursor: pointer; }
-        .btn:active { background: #009900; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn:active:not(:disabled) { background: #009900; }
         .note { font-size: 12px; color: #666; margin-top: 15px; text-align: center; }
     </style>
 </head>
@@ -28,12 +29,15 @@
         <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
         <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
         
-        <button class="btn" onclick="submitSurvey()">この内容で登録する</button>
+        <button id="submitBtn" class="btn" onclick="submitSurvey()">この内容で登録する</button>
         <p class="note">※登録後、LINEトーク画面に自動送信されます。</p>
     </div>
 
     <script>
-        // LIFF IDを直接埋め込み済み
+        // 更新したGASウェブアプリURL
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwGEnbvvV-UCKBmEovCTFnuJBzfvtoSCKXlokAW-CRZ9CcE5dwqht2Augy6OxDEnYVm/exec";
+
+        // LIFF初期化
         liff.init({ liffId: "2009263353-C0dh9qJf" }).then(() => {
             if (!liff.isLoggedIn()) {
                 liff.login();
@@ -42,8 +46,8 @@
             console.error('LIFF初期化失敗', err);
         });
 
-        function submitSurvey() {
-            // チェックされた項目を取得
+        async function submitSurvey() {
+            const submitBtn = document.getElementById('submitBtn');
             const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked'))
                                  .map(el => el.value);
             
@@ -52,19 +56,44 @@
                 return;
             }
 
-            // 送信メッセージの作成
-            const message = "【部会登録】\n" + selected.join("\n");
+            // 二重送信防止
+            submitBtn.disabled = true;
+            submitBtn.innerText = "登録中...";
 
-            // LINEトーク画面にメッセージを送信して閉じる
-            liff.sendMessages([{
-                type: 'text',
-                text: message
-            }]).then(() => {
+            try {
+                // LINEプロフィール取得
+                const profile = await liff.getProfile();
+                
+                const postData = {
+                    userId: profile.userId,
+                    name: profile.displayName,
+                    bukai: selected.join(", ")
+                };
+
+                // 1. Googleスプレッドシート(GAS)へ送信
+                // no-corsモードで送信し、バックグラウンドで処理させます
+                await fetch(GAS_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(postData)
+                });
+
+                // 2. LINEトーク画面にメッセージ送信
+                await liff.sendMessages([{
+                    type: 'text',
+                    text: `【部会登録完了】\n氏名：${postData.name}\n所属：${postData.bukai}\n\nご協力ありがとうございました。`
+                }]);
+
+                // 3. LIFFウィンドウを閉じる
                 liff.closeWindow();
-            }).catch((err) => {
-                console.error('送信エラー', err);
-                alert("LINEアプリ内から操作してください。");
-            });
+
+            } catch (err) {
+                console.error('エラー発生:', err);
+                alert("登録中にエラーが発生しました。LINEアプリ内から再度お試しください。");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "この内容で登録する";
+            }
         }
     </script>
 </body>
