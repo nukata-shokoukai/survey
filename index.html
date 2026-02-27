@@ -1,83 +1,132 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>額田商工会 部会登録</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        h2 { font-size: 18px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
-        .option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border: 2px solid #eee; border-radius: 10px; cursor: pointer; }
-        .option:has(input:checked) { border-color: #00B900; background-color: #f0fff0; }
-        .option input { margin-right: 15px; transform: scale(1.4); }
-        .btn { display: block; width: 100%; padding: 16px; background: #00B900; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; margin-top: 25px; cursor: pointer; }
-        .btn:disabled { background: #ccc; }
-        .note { font-size: 12px; color: #666; margin-top: 15px; text-align: center; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>額田商工会 部会登録</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; }
+    .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 420px; margin: auto; }
+    h2 { font-size: 18px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
+    .option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border: 2px solid #eee; border-radius: 10px; cursor: pointer; user-select: none; }
+    .option:has(input:checked) { border-color: #00B900; background-color: #f0fff0; }
+    .option input { margin-right: 15px; transform: scale(1.4); }
+    .btn { display: block; width: 100%; padding: 16px; background: #00B900; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; margin-top: 18px; cursor: pointer; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .note { font-size: 12px; color: #666; margin-top: 12px; text-align: center; }
+    .debug { margin-top: 12px; padding: 10px; border-radius: 10px; background: #111; color: #0f0; font-size: 11px; white-space: pre-wrap; display:none; }
+    .debug.show { display:block; }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <h2>所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
-        <label class="option"><input type="checkbox" name="bukai" value="商業部会"> 商業部会</label>
-        <label class="option"><input type="checkbox" name="bukai" value="工業部会"> 工業部会</label>
-        <label class="option"><input type="checkbox" name="bukai" value="建設業部会"> 建設業部会</label>
-        <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
-        <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
-        <button id="submitBtn" class="btn" onclick="submitSurvey()">この内容で登録する</button>
-        <p class="note">※登録後、LINEトーク画面に自動送信されます。</p>
-    </div>
+  <div class="card">
+    <h2>所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
 
-    <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby6Nn6bb2vlPOr_lOJhnELAzvCsfzFbclSo_7pDGbi6vWvSlKX0S54G9Id1US740gbp/exec";
+    <label class="option"><input type="checkbox" name="bukai" value="商業部会"> 商業部会</label>
+    <label class="option"><input type="checkbox" name="bukai" value="工業部会"> 工業部会</label>
+    <label class="option"><input type="checkbox" name="bukai" value="建設業部会"> 建設業部会</label>
+    <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
+    <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
 
-        liff.init({ liffId: "2009263353-C0dh9qJf" }).then(() => {
-            if (!liff.isLoggedIn()) { liff.login(); }
-        }).catch(err => alert("LIFF初期化エラー: " + err));
+    <button id="submitBtn" class="btn" onclick="submitSurvey()">この内容で登録する</button>
+    <p class="note">※登録後、LINEトーク画面に自動送信されます。</p>
 
-        async function submitSurvey() {
-            const btn = document.getElementById('submitBtn');
-            const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
-            
-            if (selected.length === 0) {
-                alert("少なくとも1つの部会を選択してください。");
-                return;
-            }
+    <pre id="debug" class="debug"></pre>
+  </div>
 
-            btn.disabled = true;
-            btn.innerText = "登録中...";
+  <script>
+    // ===== 設定ここだけ =====
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby6Nn6bb2vlPOr_lOJhnELAzvCsfzFbclSo_7pDGbi6vWvSlKX0S54G9Id1US740gbp/exec";
+    const LIFF_ID = "2009263353-C0dh9qJf";
+    const DEBUG = true; // falseにすると画面ログ非表示
+    // =======================
 
-            try {
-                const profile = await liff.getProfile();
-                const postData = {
-                    userId: profile.userId,
-                    name: profile.displayName,
-                    bukai: selected.join(", ")
-                };
+    const debugEl = document.getElementById("debug");
+    if (DEBUG) debugEl.classList.add("show");
+    const log = (m) => {
+      if (!DEBUG) return;
+      debugEl.textContent += `\n${new Date().toISOString()} ${m}`;
+    };
 
-                // 1. GASへ送信 (Headersを削除して軽量化)
-                await fetch(GAS_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify(postData)
-                });
-
-                // 2. LINEトーク画面にメッセージ送信
-                await liff.sendMessages([{
-                    type: 'text',
-                    text: "【部会登録完了】\n氏名：" + postData.name + "\n所属：" + postData.bukai + "\n\nご協力ありがとうございました。"
-                }]);
-
-                liff.closeWindow();
-
-            } catch (err) {
-                // ここでエラーの内容を表示させるようにしました
-                alert("送信エラー詳細: " + err.message);
-                btn.disabled = false;
-                btn.innerText = "この内容で登録する";
-            }
+    liff.init({ liffId: LIFF_ID })
+      .then(() => {
+        log("LIFF init OK");
+        if (!liff.isLoggedIn()) {
+          log("not logged in -> login()");
+          liff.login();
         }
-    </script>
+      })
+      .catch(err => {
+        alert("LIFF初期化エラー: " + (err?.message || err));
+        log("LIFF init ERROR: " + (err?.message || err));
+      });
+
+    async function submitSurvey() {
+      const btn = document.getElementById('submitBtn');
+      const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
+
+      if (selected.length === 0) {
+        alert("少なくとも1つの部会を選択してください。");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "登録中...";
+
+      try {
+        // 1) LINEプロフィール取得
+        const profile = await liff.getProfile();
+        const postData = {
+          userId: profile.userId,
+          name: profile.displayName,
+          bukai: selected.join(", ")
+        };
+        log("profile OK userId=" + postData.userId);
+
+        // 2) GASへ送信（フォーム形式 / JSON.parse不要）
+        const body = new URLSearchParams({
+          userId: postData.userId,
+          name: postData.name,
+          bukai: postData.bukai
+        });
+
+        log("POST to GAS start");
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          mode: "cors",
+          cache: "no-store",
+          body
+        });
+
+        log(`GAS fetch resolved type=${res.type} status=${res.status} ok=${res.ok}`);
+
+        // 3) 念のためレスポンスを読む（CORSで読めない場合もあるのでtry）
+        let gasText = "";
+        try {
+          gasText = await res.text();
+          log("GAS response text=" + gasText.slice(0, 200));
+        } catch (e) {
+          log("GAS response unreadable (likely CORS opaque)");
+        }
+
+        // 4) LINEトークに完了通知
+        await liff.sendMessages([{
+          type: 'text',
+          text: "【部会登録完了】\n氏名：" + postData.name + "\n所属：" + postData.bukai + "\n\nご協力ありがとうございました。"
+        }]);
+        log("sendMessages OK");
+
+        liff.closeWindow();
+
+      } catch (err) {
+        const msg = (err && err.message) ? err.message : String(err);
+        alert("送信エラー詳細: " + msg);
+        log("ERROR: " + msg);
+        btn.disabled = false;
+        btn.innerText = "この内容で登録する";
+      }
+    }
+  </script>
 </body>
 </html>
