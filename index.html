@@ -9,90 +9,73 @@
         body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; }
         .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
         h2 { font-size: 18px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
-        .option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border: 2px solid #eee; border-radius: 10px; cursor: pointer; transition: 0.2s; }
-        /* チェックされた時の色 */
+        .option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border: 2px solid #eee; border-radius: 10px; cursor: pointer; }
         .option:has(input:checked) { border-color: #00B900; background-color: #f0fff0; }
         .option input { margin-right: 15px; transform: scale(1.4); }
         .btn { display: block; width: 100%; padding: 16px; background: #00B900; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; margin-top: 25px; cursor: pointer; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
-        .btn:active:not(:disabled) { background: #009900; }
+        .btn:disabled { background: #ccc; }
         .note { font-size: 12px; color: #666; margin-top: 15px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
-        
         <label class="option"><input type="checkbox" name="bukai" value="商業部会"> 商業部会</label>
         <label class="option"><input type="checkbox" name="bukai" value="工業部会"> 工業部会</label>
         <label class="option"><input type="checkbox" name="bukai" value="建設業部会"> 建設業部会</label>
         <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
         <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
-        
         <button id="submitBtn" class="btn" onclick="submitSurvey()">この内容で登録する</button>
         <p class="note">※登録後、LINEトーク画面に自動送信されます。</p>
     </div>
 
     <script>
-        // 更新したGASウェブアプリURL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwGEnbvvV-UCKBmEovCTFnuJBzfvtoSCKXlokAW-CRZ9CcE5dwqht2Augy6OxDEnYVm/exec";
 
-        // LIFF初期化
         liff.init({ liffId: "2009263353-C0dh9qJf" }).then(() => {
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            }
-        }).catch((err) => {
-            console.error('LIFF初期化失敗', err);
-        });
+            if (!liff.isLoggedIn()) { liff.login(); }
+        }).catch(err => alert("LIFF初期化エラー: " + err));
 
         async function submitSurvey() {
-            const submitBtn = document.getElementById('submitBtn');
-            const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked'))
-                                 .map(el => el.value);
+            const btn = document.getElementById('submitBtn');
+            const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
             
             if (selected.length === 0) {
                 alert("少なくとも1つの部会を選択してください。");
                 return;
             }
 
-            // 二重送信防止
-            submitBtn.disabled = true;
-            submitBtn.innerText = "登録中...";
+            btn.disabled = true;
+            btn.innerText = "登録中...";
 
             try {
-                // LINEプロフィール取得
                 const profile = await liff.getProfile();
-                
                 const postData = {
                     userId: profile.userId,
                     name: profile.displayName,
                     bukai: selected.join(", ")
                 };
 
-                // 1. Googleスプレッドシート(GAS)へ送信
-                // no-corsモードで送信し、バックグラウンドで処理させます
+                // 1. GASへ送信 (Headersを削除して軽量化)
                 await fetch(GAS_URL, {
                     method: "POST",
                     mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(postData)
                 });
 
                 // 2. LINEトーク画面にメッセージ送信
                 await liff.sendMessages([{
                     type: 'text',
-                    text: `【部会登録完了】\n氏名：${postData.name}\n所属：${postData.bukai}\n\nご協力ありがとうございました。`
+                    text: "【部会登録完了】\n氏名：" + postData.name + "\n所属：" + postData.bukai + "\n\nご協力ありがとうございました。"
                 }]);
 
-                // 3. LIFFウィンドウを閉じる
                 liff.closeWindow();
 
             } catch (err) {
-                console.error('エラー発生:', err);
-                alert("登録中にエラーが発生しました。LINEアプリ内から再度お試しください。");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "この内容で登録する";
+                // ここでエラーの内容を表示させるようにしました
+                alert("送信エラー詳細: " + err.message);
+                btn.disabled = false;
+                btn.innerText = "この内容で登録する";
             }
         }
     </script>
