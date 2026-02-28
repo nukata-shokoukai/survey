@@ -15,13 +15,15 @@
     .btn { display: block; width: 100%; padding: 16px; background: #00B900; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; margin-top: 18px; cursor: pointer; }
     .btn:disabled { background: #ccc; cursor: not-allowed; }
     .note { font-size: 12px; color: #666; margin-top: 12px; text-align: center; }
+    .locked { background:#fff6f6; border:2px solid #ffcccc; padding:12px; border-radius:12px; margin-top:12px; font-size:13px; color:#aa0000; text-align:center; display:none; }
+    .locked.show { display:block; }
     .debug { margin-top: 12px; padding: 10px; border-radius: 10px; background: #111; color: #0f0; font-size: 11px; white-space: pre-wrap; display:none; }
     .debug.show { display:block; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
+    <h2 id="title">所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
 
     <label class="option"><input type="checkbox" name="bukai" value="商業部会"> 商業部会</label>
     <label class="option"><input type="checkbox" name="bukai" value="工業部会"> 工業部会</label>
@@ -30,40 +32,103 @@
     <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
 
     <button id="submitBtn" class="btn" onclick="submitSurvey()">この内容で登録する</button>
-    <p class="note">※登録後、LINEトーク画面に自動送信されます。</p>
+    <p class="note" id="note">※登録後、LINEトーク画面に自動送信されます。</p>
 
+    <div class="locked" id="lockedBox">このアカウントは既に回答済みです。再入力はできません。</div>
     <pre id="debug" class="debug"></pre>
   </div>
 
   <script>
-    // ===== 設定ここだけ =====
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxn15v3YkesFWBMDHv7aRHUnYXW6KJZn6MKTVAL-2fdyyhk32V59Gp3ASHG5HST8Vf8/exec";
+    // ===== 設定（ここだけ変えればOK）=====
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby6Nn6bb2vlPOr_lOJhnELAzvCsfzFbclSo_7pDGbi6vWvSlKX0S54G9Id1US740gbp/exec";
     const LIFF_ID = "2009263353-C0dh9qJf";
-    const DEBUG = true; // falseにすると画面ログ非表示
-    // =======================
+    const DEBUG = false; // trueにすると画面下にログ表示
+    // ===================================
 
+    const btn = document.getElementById("submitBtn");
+    const lockedBox = document.getElementById("lockedBox");
+    const title = document.getElementById("title");
+    const note = document.getElementById("note");
     const debugEl = document.getElementById("debug");
+
     if (DEBUG) debugEl.classList.add("show");
     const log = (m) => {
       if (!DEBUG) return;
       debugEl.textContent += `\n${new Date().toISOString()} ${m}`;
     };
 
+    function lockUI(message) {
+      document.querySelectorAll('input[name="bukai"]').forEach(el => el.disabled = true);
+      btn.disabled = true;
+      btn.innerText = "回答済み";
+      lockedBox.textContent = message || "このアカウントは既に回答済みです。再入力はできません。";
+      lockedBox.classList.add("show");
+      title.innerHTML = "既に登録済みです<br><small style='color:#666;'>（再入力できません）</small>";
+      note.textContent = "※必要があれば商工会へご連絡ください。";
+    }
+
+    // ===== JSONPで「回答済み」チェック（CORS回避）=====
+    function checkAnsweredViaJSONP(userId) {
+      return new Promise((resolve, reject) => {
+        const cbName = "jsonp_cb_" + Math.random().toString(36).slice(2);
+
+        window[cbName] = (data) => {
+          cleanup();
+          resolve(data);
+        };
+
+        const cleanup = () => {
+          try { delete window[cbName]; } catch(e) { window[cbName] = undefined; }
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+        };
+
+        const script = document.createElement("script");
+        const url = new URL(GAS_URL);
+        url.searchParams.set("action", "check");
+        url.searchParams.set("userId", userId);
+        url.searchParams.set("callback", cbName);
+        script.src = url.toString();
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("チェック通信に失敗しました"));
+        };
+
+        document.body.appendChild(script);
+      });
+    }
+
+    // ===== 起動：LIFF初期化 → 回答済み判定 =====
     liff.init({ liffId: LIFF_ID })
-      .then(() => {
+      .then(async () => {
         log("LIFF init OK");
+
         if (!liff.isLoggedIn()) {
-          log("not logged in -> login()");
+          log("not logged in -> login");
           liff.login();
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        const userId = profile.userId;
+
+        log("profile OK userId=" + userId);
+
+        // ★ここで「回答済みならロック」
+        const result = await checkAnsweredViaJSONP(userId);
+        log("check result=" + JSON.stringify(result));
+
+        if (result && result.answered) {
+          lockUI("このアカウントは既に回答済みです。再入力はできません。必要があれば商工会へご連絡ください。");
         }
       })
       .catch(err => {
-        alert("LIFF初期化エラー: " + (err?.message || err));
-        log("LIFF init ERROR: " + (err?.message || err));
+        alert("LIFF初期化/判定エラー: " + (err?.message || err));
+        log("init error: " + (err?.message || err));
       });
 
+    // ===== 送信 =====
     async function submitSurvey() {
-      const btn = document.getElementById('submitBtn');
       const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
 
       if (selected.length === 0) {
@@ -75,54 +140,42 @@
       btn.innerText = "登録中...";
 
       try {
-        // 1) LINEプロフィール取得
         const profile = await liff.getProfile();
         const postData = {
           userId: profile.userId,
           name: profile.displayName,
           bukai: selected.join(", ")
         };
-        log("profile OK userId=" + postData.userId);
 
-        // 2) GASへ送信（フォーム形式 / JSON.parse不要）
+        // ★フォーム送信（GAS側がe.parameterで受けるため）
         const body = new URLSearchParams({
           userId: postData.userId,
           name: postData.name,
           bukai: postData.bukai
         });
 
-        log("POST to GAS start");
-        const res = await fetch(GAS_URL, {
+        log("POST start");
+
+        await fetch(GAS_URL, {
           method: "POST",
           mode: "cors",
           cache: "no-store",
           body
         });
 
-        log(`GAS fetch resolved type=${res.type} status=${res.status} ok=${res.ok}`);
+        log("POST done");
 
-        // 3) 念のためレスポンスを読む（CORSで読めない場合もあるのでtry）
-        let gasText = "";
-        try {
-          gasText = await res.text();
-          log("GAS response text=" + gasText.slice(0, 200));
-        } catch (e) {
-          log("GAS response unreadable (likely CORS opaque)");
-        }
-
-        // 4) LINEトークに完了通知
+        // LINEトークに完了通知
         await liff.sendMessages([{
           type: 'text',
           text: "【部会登録完了】\n氏名：" + postData.name + "\n所属：" + postData.bukai + "\n\nご協力ありがとうございました。"
         }]);
-        log("sendMessages OK");
 
         liff.closeWindow();
 
       } catch (err) {
-        const msg = (err && err.message) ? err.message : String(err);
-        alert("送信エラー詳細: " + msg);
-        log("ERROR: " + msg);
+        alert("送信エラー詳細: " + (err?.message || err));
+        log("send error: " + (err?.message || err));
         btn.disabled = false;
         btn.innerText = "この内容で登録する";
       }
