@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>資料ビューア | ぬかた商工会</title>
+  <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: #00B900;
+      color: white;
+      text-align: center;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .error {
+      padding: 40px 16px;
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+    }
+
+    /* PDFビューア */
+    iframe {
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 48px);
+      border: none;
+    }
+
+    /* フォルダビューア */
+    .folder-frame {
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 48px);
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header" id="header">資料を読み込み中...</div>
+  <div id="content"></div>
+
+  <script>
+    const LIFF_ID = "YOUR_VIEWER_LIFF_ID"; // 後でLIFF IDに置き換え
+
+    // URLパラメータからGoogleドライブのURLを取得
+    function getParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name) || "";
+    }
+
+    // GoogleドライブURLをビューア用URLに変換
+    function convertDriveUrl(url) {
+      if (!url) return null;
+
+      // ファイルID抽出（ファイルの場合）
+      const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (fileMatch) {
+        const fileId = fileMatch[1];
+        return {
+          type: "pdf",
+          url: `https://drive.google.com/file/d/${fileId}/preview`
+        };
+      }
+
+      // フォルダID抽出（フォルダの場合）
+      const folderMatch = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+      if (folderMatch) {
+        const folderId = folderMatch[1];
+        return {
+          type: "folder",
+          url: `https://drive.google.com/embeddedfolderview?id=${folderId}#list`
+        };
+      }
+
+      // id=形式のURL
+      const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (idMatch) {
+        const fileId = idMatch[1];
+        return {
+          type: "pdf",
+          url: `https://drive.google.com/file/d/${fileId}/preview`
+        };
+      }
+
+      return null;
+    }
+
+    function init() {
+      const driveUrl = getParam("url");
+      const title = getParam("title") || "資料";
+      const header = document.getElementById("header");
+      const content = document.getElementById("content");
+
+      if (!driveUrl) {
+        header.textContent = "エラー";
+        content.innerHTML = '<div class="error">URLが指定されていません。</div>';
+        return;
+      }
+
+      const converted = convertDriveUrl(decodeURIComponent(driveUrl));
+
+      if (!converted) {
+        header.textContent = "エラー";
+        content.innerHTML = '<div class="error">対応していないURLです。</div>';
+        return;
+      }
+
+      header.textContent = title;
+
+      const iframe = document.createElement("iframe");
+      iframe.src = converted.url;
+      iframe.className = converted.type === "folder" ? "folder-frame" : "";
+      iframe.allowFullscreen = true;
+      content.appendChild(iframe);
+    }
+
+    liff.init({ liffId: LIFF_ID })
+      .then(() => { init(); })
+      .catch(() => { init(); });
+  </script>
+
+</body>
+</html>
