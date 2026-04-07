@@ -239,7 +239,7 @@
         renderSeminars(data.seminars);
       };
 
-      script.src = `${GAS_URL}?type=seminar&callback=${callbackName}`;
+      script.src = `${GAS_URL}?action=seminar&callback=${callbackName}`;
       script.onerror = function() {
         document.getElementById("content").innerHTML =
           '<div class="empty">データの読み込みに失敗しました。<br>時間をおいて再度お試しください。</div>';
