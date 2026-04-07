@@ -184,7 +184,7 @@
               <div class="card-title">${s.title}</div>
               ${s.location ? `<div class="card-location">📍 ${s.location}</div>` : ""}
               ${s.note ? `<div class="card-note">${s.note}</div>` : ""}
-              ${s.detailUrl ? `<a class="card-detail-btn" href="https://liff.line.me/2009263353-lkGoz8ke?url=${encodeURIComponent(s.detailUrl)}&title=${encodeURIComponent(s.title)}">詳細はこちら</a>` : ""}
+              ${s.detailUrl ? `<a class="card-detail-btn" href="${s.detailUrl}" target="_blank">詳細はこちら</a>` : ""}
             </div>
           `;
         });
