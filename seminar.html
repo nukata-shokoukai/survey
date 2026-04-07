@@ -227,8 +227,8 @@
     }
 
     function openViewer(encodedUrl, encodedTitle) {
-      const viewerUrl = "https://liff.line.me/2009263353-lkGoz8ke?url=" + encodedUrl + "&title=" + encodedTitle;
-      liff.openWindow({ url: viewerUrl, external: true });
+      const driveUrl = decodeURIComponent(encodedUrl);
+      liff.openWindow({ url: driveUrl, external: true });
     }
 
     liff.init({ liffId: LIFF_ID })
