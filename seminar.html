@@ -100,8 +100,7 @@
       margin-top: 12px;
       background: #00B900;
       color: white;
-      border: none;
-      cursor: pointer;
+      text-decoration: none;
       padding: 8px 20px;
       border-radius: 8px;
       font-size: 13px;
@@ -184,7 +183,7 @@
               <div class="card-title">${s.title}</div>
               ${s.location ? `<div class="card-location">📍 ${s.location}</div>` : ""}
               ${s.note ? `<div class="card-note">${s.note}</div>` : ""}
-              ${s.detailUrl ? `<button class="card-detail-btn" onclick="openViewer('${encodeURIComponent(s.detailUrl)}', '${encodeURIComponent(s.title)}')">詳細・申込はこちら</button>` : ""}
+              ${s.detailUrl ? `<a class="card-detail-btn" href="${s.detailUrl}">詳細・申込はこちら</a>` : ""}
             </div>
           `;
         });
@@ -224,11 +223,6 @@
           '<div class="empty">データの読み込みに失敗しました。<br>時間をおいて再度お試しください。</div>';
       };
       document.head.appendChild(script);
-    }
-
-    function openViewer(encodedUrl, encodedTitle) {
-      const driveUrl = decodeURIComponent(encodedUrl);
-      window.open(driveUrl, '_blank');
     }
 
     liff.init({ liffId: LIFF_ID })
