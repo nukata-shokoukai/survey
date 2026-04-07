@@ -140,7 +140,6 @@
 
   <script>
     const LIFF_ID = "2009263353-MYblj7fY";
-    let liffReady = false;
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzNnOGePUruqSAa0vVESipISx3Nr8PxUzEAlkVtVElIr2dgbm8I4uNqexo256bNQm96/exec";
 
     function formatDate(dateStr) {
@@ -184,7 +183,7 @@
               <div class="card-title">${s.title}</div>
               ${s.location ? `<div class="card-location">📍 ${s.location}</div>` : ""}
               ${s.note ? `<div class="card-note">${s.note}</div>` : ""}
-              ${s.detailUrl ? `<button class="card-detail-btn" onclick="openDetail('${encodeURIComponent(s.detailUrl)}')">詳細・申込はこちら</button>` : ""}
+              ${s.detailUrl ? `<a class="card-detail-btn" href="${s.detailUrl}" target="_blank">詳細・申込はこちら</a>` : ""}
             </div>
           `;
         });
@@ -226,18 +225,9 @@
       document.head.appendChild(script);
     }
 
-    function openDetail(encodedUrl) {
-      const url = decodeURIComponent(encodedUrl);
-      if (liffReady && liff.isInClient()) {
-        liff.openWindow({ url: url, external: true });
-      } else {
-        location.href = url;
-      }
-    }
-
     liff.init({ liffId: LIFF_ID })
-      .then(() => { liffReady = true; fetchSeminars(); })
-      .catch(() => { liffReady = false; fetchSeminars(); });
+      .then(() => { fetchSeminars(); })
+      .catch(() => { fetchSeminars(); });
   </script>
 
 </body>
