@@ -184,7 +184,7 @@
               <div class="card-title">${s.title}</div>
               ${s.location ? `<div class="card-location">📍 ${s.location}</div>` : ""}
               ${s.note ? `<div class="card-note">${s.note}</div>` : ""}
-              ${s.detailUrl ? `<a class="card-detail-btn" href="${s.detailUrl}" target="_blank">詳細・申込はこちら</a>` : ""}
+              ${s.detailUrl ? `<a class="card-detail-btn" href="${s.detailUrl.startsWith('http') ? s.detailUrl : 'https://' + s.detailUrl}">詳細・申込はこちら</a>` : ""}
             </div>
           `;
         });
