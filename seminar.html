@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>セミナー情報 | ぬかた商工会</title>
+  <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .header {
+      background: #00B900;
+      color: white;
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .header p {
+      font-size: 12px;
+      margin-top: 4px;
+      opacity: 0.9;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .empty {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid #00B900;
+    }
+
+    .card-date {
+      font-size: 12px;
+      color: #00B900;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .card-location {
+      font-size: 13px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .card-note {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.5;
+      background: #f8f8f8;
+      border-radius: 6px;
+      padding: 8px;
+      margin-top: 8px;
+    }
+
+    .badge-past {
+      display: inline-block;
+      background: #eee;
+      color: #999;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      color: #888;
+      font-weight: bold;
+      margin: 16px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .contact {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .contact p {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .contact a {
+      display: inline-block;
+      background: #00B900;
+      color: white;
+      text-decoration: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>セミナー・研修情報</h1>
+    <p>ぬかた商工会からのお知らせ</p>
+  </div>
+
+  <div id="content">
+    <div class="loading">読み込み中...</div>
+  </div>
+
+  <div class="contact">
+    <p>参加・詳細のお問い合わせ</p>
+    <a href="tel:0564-82-3077">電話で問い合わせる</a>
+  </div>
+
+  <script>
+    const LIFF_ID = "YOUR_SEMINAR_LIFF_ID"; // 後でLIFF IDに置き換え
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzNnOGePUruqSAa0vVESipISx3Nr8PxUzEAlkVtVElIr2dgbm8I4uNqexo256bNQm96/exec";
+
+    // 日付を見やすい形式に変換
+    function formatDate(dateStr) {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+      const weekday = weekdays[d.getDay()];
+      return `${month}月${day}日（${weekday}）`;
+    }
+
+    // 過去のイベントか判定
+    function isPast(dateStr) {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d < today;
+    }
+
+    // セミナー一覧を描画
+    function renderSeminars(seminars) {
+      const content = document.getElementById("content");
+
+      if (!seminars || seminars.length === 0) {
+        content.innerHTML = '<div class="empty">現在予定されているセミナーはありません。<br>またのご確認をお待ちしています。</div>';
+        return;
+      }
+
+      const upcoming = seminars.filter(s => !isPast(s.date));
+      const past = seminars.filter(s => isPast(s.date));
+
+      let html = "";
+
+      if (upcoming.length > 0) {
+        html += '<div class="section-label">開催予定</div>';
+        upcoming.forEach(s => {
+          html += `
+            <div class="card">
+              <div class="card-date">${formatDate(s.date)}</div>
+              <div class="card-title">${s.title}</div>
+              ${s.location ? `<div class="card-location">📍 ${s.location}</div>` : ""}
+              ${s.note ? `<div class="card-note">${s.note}</div>` : ""}
+            </div>
+          `;
+        });
+      }
+
+      if (past.length > 0) {
+        html += '<div class="section-label">過去のセミナー</div>';
+        past.forEach(s => {
+          html += `
+            <div class="card" style="border-left-color: #ccc; opacity: 0.7;">
+              <div class="card-date" style="color:#999;">
+                ${formatDate(s.date)}<span class="badge-past">終了</span>
+              </div>
+              <div class="card-title" style="color:#999;">${s.title}</div>
+              ${s.location ? `<div class="card-location">📍 ${s.location}</div>` : ""}
+            </div>
+          `;
+        });
+      }
+
+      content.innerHTML = html;
+    }
+
+    // GASからデータ取得（JSONP）
+    function fetchSeminars() {
+      const callbackName = "seminarCallback_" + Date.now();
+      const script = document.createElement("script");
+
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        document.head.removeChild(script);
+        renderSeminars(data.seminars);
+      };
+
+      script.src = `${GAS_URL}?type=seminar&callback=${callbackName}`;
+      script.onerror = function() {
+        document.getElementById("content").innerHTML =
+          '<div class="empty">データの読み込みに失敗しました。<br>時間をおいて再度お試しください。</div>';
+      };
+      document.head.appendChild(script);
+    }
+
+    // LIFF初期化 → データ取得
+    liff.init({ liffId: LIFF_ID })
+      .then(() => {
+        fetchSeminars();
+      })
+      .catch(() => {
+        // LIFF初期化失敗でもデータ表示は続行（ブラウザ直アクセス時）
+        fetchSeminars();
+      });
+  </script>
+
+</body>
+</html>
