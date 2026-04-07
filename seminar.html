@@ -228,7 +228,7 @@
 
     function openViewer(encodedUrl, encodedTitle) {
       const driveUrl = decodeURIComponent(encodedUrl);
-      liff.openWindow({ url: driveUrl, external: true });
+      window.open(driveUrl, '_blank');
     }
 
     liff.init({ liffId: LIFF_ID })
