@@ -24,107 +24,80 @@
       margin-bottom: 16px;
     }
 
-    .header h1 {
-      font-size: 18px;
-      font-weight: bold;
-    }
+    .header h1 { font-size: 18px; font-weight: bold; }
+    .header p { font-size: 12px; margin-top: 4px; opacity: 0.9; }
 
-    .header p {
-      font-size: 12px;
-      margin-top: 4px;
-      opacity: 0.9;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #888;
-      font-size: 14px;
-    }
+    .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
 
     .empty {
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      text-align: center;
-      color: #888;
-      font-size: 14px;
+      background: white; border-radius: 12px; padding: 32px;
+      text-align: center; color: #888; font-size: 14px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     .card {
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      background: white; border-radius: 12px; padding: 16px;
+      margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       border-left: 4px solid #00B900;
     }
 
-    .card-date {
-      font-size: 12px;
-      color: #00B900;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    .card-title {
-      font-size: 16px;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
+    .card-date { font-size: 12px; color: #00B900; font-weight: bold; margin-bottom: 4px; }
+    .card-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 8px; line-height: 1.4; }
 
     .card-location {
-      font-size: 13px;
-      color: #666;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 6px;
+      font-size: 13px; color: #666; display: flex;
+      align-items: center; gap: 4px; margin-bottom: 6px;
     }
 
     .card-note {
-      font-size: 12px;
-      color: #888;
-      line-height: 1.5;
-      background: #f8f8f8;
-      border-radius: 6px;
-      padding: 8px;
-      margin-top: 8px;
+      font-size: 12px; color: #888; line-height: 1.5;
+      background: #f8f8f8; border-radius: 6px; padding: 8px; margin-top: 8px;
     }
 
     .card-detail-btn {
-      display: inline-block;
-      margin-top: 12px;
-      background: #00B900;
-      color: white;
-      text-decoration: none;
-      border: none;
-      padding: 8px 20px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: bold;
+      display: inline-block; margin-top: 12px; background: #00B900;
+      color: white; text-decoration: none; border: none; cursor: pointer;
+      padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: bold;
     }
 
     .badge-past {
-      display: inline-block;
-      background: #eee;
-      color: #999;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      margin-left: 8px;
+      display: inline-block; background: #eee; color: #999;
+      font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 8px;
     }
 
     .section-label {
-      font-size: 12px;
-      color: #888;
-      font-weight: bold;
-      margin: 16px 0 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: 12px; color: #888; font-weight: bold;
+      margin: 16px 0 8px; letter-spacing: 0.05em;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7); z-index: 1000;
+      flex-direction: column;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-header {
+      background: #00B900; color: white;
+      padding: 12px 16px; display: flex;
+      justify-content: space-between; align-items: center;
+      flex-shrink: 0;
+    }
+
+    .modal-title { font-size: 15px; font-weight: bold; }
+
+    .modal-close {
+      background: none; border: none; color: white;
+      font-size: 22px; cursor: pointer; line-height: 1;
+    }
+
+    .modal-body { flex: 1; overflow: hidden; }
+
+    .modal-body iframe {
+      width: 100%; height: 100%; border: none;
     }
   </style>
 </head>
@@ -139,6 +112,17 @@
     <div class="loading">読み込み中...</div>
   </div>
 
+  <!-- モーダル -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">詳細</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <iframe id="modal-iframe" src="" allowfullscreen></iframe>
+    </div>
+  </div>
+
   <script>
     const LIFF_ID = "2009263353-MYblj7fY";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzNnOGePUruqSAa0vVESipISx3Nr8PxUzEAlkVtVElIr2dgbm8I4uNqexo256bNQm96/exec";
@@ -150,8 +134,7 @@
       const month = d.getMonth() + 1;
       const day = d.getDate();
       const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-      const weekday = weekdays[d.getDay()];
-      return `${month}月${day}日（${weekday}）`;
+      return `${month}月${day}日（${weekdays[d.getDay()]}）`;
     }
 
     function isPast(dateStr) {
@@ -160,6 +143,27 @@
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       return d < today;
+    }
+
+    function convertToEmbedUrl(url) {
+      if (!url) return url;
+      const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (fileMatch) return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+      const folderMatch = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+      if (folderMatch) return `https://drive.google.com/embeddedfolderview?id=${folderMatch[1]}#list`;
+      return url;
+    }
+
+    function openModal(url, title) {
+      const embedUrl = convertToEmbedUrl(url);
+      document.getElementById("modal-iframe").src = embedUrl;
+      document.getElementById("modal-title").textContent = title;
+      document.getElementById("modal").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("modal").classList.remove("active");
+      document.getElementById("modal-iframe").src = "";
     }
 
     function renderSeminars(seminars) {
@@ -172,19 +176,20 @@
 
       const upcoming = seminars.filter(s => !isPast(s.date));
       const past = seminars.filter(s => isPast(s.date));
-
       let html = "";
 
       if (upcoming.length > 0) {
         html += '<div class="section-label">開催予定</div>';
         upcoming.forEach(s => {
+          const safeUrl = s.detailUrl.replace(/'/g, "\\'");
+          const safeTitle = s.title.replace(/'/g, "\\'");
           html += `
             <div class="card">
               <div class="card-date">${formatDate(s.date)}</div>
               <div class="card-title">${s.title}</div>
               ${s.location ? `<div class="card-location">📍 ${s.location}</div>` : ""}
               ${s.note ? `<div class="card-note">${s.note}</div>` : ""}
-              ${s.detailUrl ? `<a class="card-detail-btn" href="${s.detailUrl}" target="_blank">詳細はこちら</a>` : ""}
+              ${s.detailUrl ? `<button class="card-detail-btn" onclick="openModal('${safeUrl}', '${safeTitle}')">詳細はこちら</button>` : ""}
             </div>
           `;
         });
