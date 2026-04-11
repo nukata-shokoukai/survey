@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>額田商工会 部会登録変更</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; }
+    .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 420px; margin: auto; }
+    h2 { font-size: 18px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
+    .current-box {
+      background: #f0fff0;
+      border: 2px solid #00B900;
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .current-box .label { color: #666; font-size: 12px; margin-bottom: 4px; }
+    .current-box .value { font-weight: bold; font-size: 16px; color: #222; }
+    .option {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 12px;
+      border: 2px solid #eee;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 16px;
+    }
+    .option:has(input:checked) { border-color: #00B900; background-color: #f0fff0; }
+    .option input { margin-right: 15px; transform: scale(1.4); }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: #00B900;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: bold;
+      margin-top: 18px;
+      cursor: pointer;
+    }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-back { background: #888; margin-top: 10px; }
+    .btn-danger { background: #d9534f; }
+    .note { font-size: 12px; color: #666; margin-top: 12px; text-align: center; }
+    .warn-box {
+      background: #fff6f6;
+      border: 2px solid #ffcccc;
+      padding: 14px;
+      border-radius: 12px;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #aa0000;
+      line-height: 1.6;
+    }
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px;
+      border: 2px solid #eee;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+      font-family: sans-serif;
+      resize: vertical;
+    }
+    textarea:focus { border-color: #00B900; outline: none; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .complete-msg {
+      text-align: center;
+      padding: 30px 10px;
+      font-size: 18px;
+      line-height: 1.8;
+      color: #00B900;
+      font-weight: bold;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px 10px;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <!-- ===== 初期ロード中 ===== -->
+    <div id="screenLoading" class="screen active">
+      <div class="loading">読み込み中...<br>少々お待ちください</div>
+    </div>
+
+    <!-- ===== 画面1: 変更理由選択 ===== -->
+    <div id="screen1" class="screen">
+      <h2>部会登録の変更</h2>
+
+      <div class="current-box">
+        <div class="label">現在の所属部会</div>
+        <div class="value" id="currentBukai">-</div>
+      </div>
+
+      <p style="font-size:15px; margin-bottom:12px;">変更の理由を選んでください：</p>
+
+      <label class="option"><input type="radio" name="reason" value="間違い"> 部会を間違えた</label>
+      <label class="option"><input type="radio" name="reason" value="変更追加"> 部会の変更・追加</label>
+      <label class="option"><input type="radio" name="reason" value="退会"> 退会する</label>
+      <label class="option"><input type="radio" name="reason" value="その他"> その他</label>
+
+      <button id="btnNext" class="btn" onclick="goToNext()" disabled>次へ</button>
+    </div>
+
+    <!-- ===== 画面2A: 部会再選択 ===== -->
+    <div id="screen2a" class="screen">
+      <h2>新しい所属部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
+
+      <label class="option"><input type="checkbox" name="bukai" value="役員会"> 役員会</label>
+      <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
+      <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
+      <label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
+      <label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
+
+      <button id="btnChange" class="btn" onclick="submitChange()">この内容で変更する</button>
+      <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
+    </div>
+
+    <!-- ===== 画面2B: 退会確認 ===== -->
+    <div id="screen2b" class="screen">
+      <h2>退会の確認</h2>
+      <div class="warn-box">
+        退会で登録してよろしいですか？<br><br>
+        現在所属している部会のLINE配信が届かなくなります。
+      </div>
+      <button id="btnLeave" class="btn btn-danger" onclick="submitLeave()">退会する</button>
+      <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
+    </div>
+
+    <!-- ===== 画面2C: その他理由入力 ===== -->
+    <div id="screen2c" class="screen">
+      <h2>その他のご連絡</h2>
+      <p style="font-size:14px; color:#666; margin-bottom:10px;">内容をご記入ください（必須）</p>
+      <textarea id="otherReason" placeholder="例：氏名変更をお願いします"></textarea>
+      <button id="btnOther" class="btn" onclick="submitOther()">送信する</button>
+      <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
+    </div>
+
+    <!-- ===== 画面3: 完了 ===== -->
+    <div id="screen3" class="screen">
+      <div class="complete-msg">
+        ご協力頂き<br>有難うございます
+      </div>
+      <p class="note">この画面は自動で閉じます</p>
+    </div>
+
+    <!-- ===== 画面E: 未登録エラー ===== -->
+    <div id="screenNoData" class="screen">
+      <h2>登録情報がありません</h2>
+      <div class="warn-box">
+        まだ部会登録がされていないか、既に退会済みです。<br><br>
+        新規登録は最初の登録フォームから行ってください。
+      </div>
+      <button class="btn" onclick="liff.closeWindow()">閉じる</button>
+    </div>
+
+  </div>
+
+  <script>
+    // ===== 設定 =====
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzNnOGePUruqSAa0vVESipISx3Nr8PxUzEAlkVtVElIr2dgbm8I4uNqexo256bNQm96/exec";
+    const LIFF_ID = "2009263353-vU7GDgRR";
+    // =================
+
+    // グローバル状態
+    let currentProfile = null;
+    let currentData = null;
+    let selectedReason = null;
+    let isSubmitting = false;
+
+    // ===== 画面切替 =====
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ===== JSONPでGAS GET呼び出し =====
+    function jsonpGet(params) {
+      return new Promise((resolve, reject) => {
+        const cbName = "jsonp_cb_" + Math.random().toString(36).slice(2);
+
+        window[cbName] = (data) => {
+          cleanup();
+          resolve(data);
+        };
+
+        const cleanup = () => {
+          try { delete window[cbName]; } catch(e) { window[cbName] = undefined; }
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+        };
+
+        const script = document.createElement("script");
+        const url = new URL(GAS_URL);
+        Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+        url.searchParams.set("callback", cbName);
+        script.src = url.toString();
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("通信エラー"));
+        };
+
+        document.body.appendChild(script);
+      });
+    }
+
+    // ===== 起動：LIFF初期化 → 現在登録取得 =====
+    liff.init({ liffId: LIFF_ID })
+      .then(async () => {
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        currentProfile = await liff.getProfile();
+
+        const result = await jsonpGet({
+          action: "getCurrent",
+          userId: currentProfile.userId
+        });
+
+        if (result && result.found) {
+          currentData = result;
+          document.getElementById("currentBukai").textContent = result.bukai || "（登録なし）";
+          showScreen('screen1');
+        } else {
+          showScreen('screenNoData');
+        }
+      })
+      .catch(err => {
+        alert("LIFF初期化エラー: " + (err && err.message ? err.message : err));
+      });
+
+    // ===== 画面1: ラジオ選択監視 =====
+    document.querySelectorAll('input[name="reason"]').forEach(el => {
+      el.addEventListener('change', () => {
+        selectedReason = el.value;
+        document.getElementById('btnNext').disabled = false;
+      });
+    });
+
+    // ===== 画面1→画面2 分岐 =====
+    function goToNext() {
+      if (!selectedReason) {
+        alert("理由を選んでください");
+        return;
+      }
+      if (selectedReason === "間違い" || selectedReason === "変更追加") {
+        showScreen('screen2a');
+      } else if (selectedReason === "退会") {
+        showScreen('screen2b');
+      } else if (selectedReason === "その他") {
+        showScreen('screen2c');
+      }
+    }
+
+    // ===== 共通: GASへ変更リクエスト送信 =====
+    async function postChange(payload) {
+      const body = new URLSearchParams({
+        action: "change",
+        userId: currentProfile.userId,
+        name: currentProfile.displayName,
+        changeType: payload.changeType,
+        newBukai: payload.newBukai || "",
+        otherReason: payload.otherReason || ""
+      });
+
+      await fetch(GAS_URL, {
+        method: "POST",
+        mode: "cors",
+        cache: "no-store",
+        body
+      });
+    }
+
+    // ===== 完了画面表示→自動クローズ =====
+    async function showCompleteAndClose(lineMessage) {
+      showScreen('screen3');
+      try {
+        if (lineMessage) {
+          await liff.sendMessages([{ type: 'text', text: lineMessage }]);
+        }
+      } catch(e) { /* 無視 */ }
+      setTimeout(() => {
+        try { liff.closeWindow(); } catch(e) {}
+      }, 2500);
+    }
+
+    // ===== 2A: 部会再選択送信 =====
+    async function submitChange() {
+      if (isSubmitting) return;
+      const btn = document.getElementById('btnChange');
+      if (btn.disabled) return;
+
+      const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
+      if (selected.length === 0) {
+        alert("少なくとも1つの部会を選択してください。");
+        return;
+      }
+
+      isSubmitting = true;
+      btn.disabled = true;
+      btn.innerText = "送信中...";
+
+      try {
+        await postChange({
+          changeType: selectedReason,
+          newBukai: selected.join(", ")
+        });
+
+        const msg = "【部会登録を変更しました】\n氏名：" + currentProfile.displayName
+                  + "\n新しい所属：" + selected.join(", ")
+                  + "\n\nご協力ありがとうございました。";
+        await showCompleteAndClose(msg);
+
+      } catch(err) {
+        alert("送信エラー: " + (err && err.message ? err.message : err));
+        btn.disabled = false;
+        btn.innerText = "この内容で変更する";
+        isSubmitting = false;
+      }
+    }
+
+    // ===== 2B: 退会送信 =====
+    async function submitLeave() {
+      if (isSubmitting) return;
+      const btn = document.getElementById('btnLeave');
+      if (btn.disabled) return;
+
+      isSubmitting = true;
+      btn.disabled = true;
+      btn.innerText = "送信中...";
+
+      try {
+        await postChange({ changeType: "退会" });
+
+        const msg = "【退会処理完了】\n氏名：" + currentProfile.displayName
+                  + "\n\n部会配信を停止しました。ご利用ありがとうございました。";
+        await showCompleteAndClose(msg);
+
+      } catch(err) {
+        alert("送信エラー: " + (err && err.message ? err.message : err));
+        btn.disabled = false;
+        btn.innerText = "退会する";
+        isSubmitting = false;
+      }
+    }
+
+    // ===== 2C: その他送信 =====
+    async function submitOther() {
+      if (isSubmitting) return;
+      const btn = document.getElementById('btnOther');
+      if (btn.disabled) return;
+
+      const text = document.getElementById('otherReason').value.trim();
+      if (!text) {
+        alert("内容をご記入ください");
+        return;
+      }
+
+      isSubmitting = true;
+      btn.disabled = true;
+      btn.innerText = "送信中...";
+
+      try {
+        await postChange({
+          changeType: "その他",
+          otherReason: text
+        });
+
+        const msg = "【ご連絡を受付けました】\n氏名：" + currentProfile.displayName
+                  + "\n内容：" + text
+                  + "\n\n事務局で確認次第ご連絡いたします。";
+        await showCompleteAndClose(msg);
+
+      } catch(err) {
+        alert("送信エラー: " + (err && err.message ? err.message : err));
+        btn.disabled = false;
+        btn.innerText = "送信する";
+        isSubmitting = false;
+      }
+    }
+  </script>
+</body>
+</html>
