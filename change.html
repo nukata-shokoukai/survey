@@ -72,6 +72,16 @@
       resize: vertical;
     }
     textarea:focus { border-color: #00B900; outline: none; }
+    .text-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #eee;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+      font-family: sans-serif;
+    }
+    .text-input:focus { border-color: #00B900; outline: none; }
     .screen { display: none; }
     .screen.active { display: block; }
     .complete-msg {
@@ -145,7 +155,9 @@
     <!-- ===== 画面2C: その他理由入力 ===== -->
     <div id="screen2c" class="screen">
       <h2>その他のご連絡</h2>
-      <p style="font-size:14px; color:#666; margin-bottom:10px;">内容をご記入ください（必須）</p>
+      <p style="font-size:14px; color:#666; margin-bottom:6px;">お名前（必須）</p>
+      <input type="text" id="otherName" class="text-input" placeholder="例：山田 太郎" />
+      <p style="font-size:14px; color:#666; margin:14px 0 6px;">ご連絡内容（必須）</p>
       <textarea id="otherReason"></textarea>
       <button id="btnOther" class="btn" onclick="submitOther()">送信する</button>
       <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
@@ -291,7 +303,8 @@
         name: currentProfile.displayName,
         changeType: payload.changeType,
         newBukai: payload.newBukai || "",
-        otherReason: payload.otherReason || ""
+        otherReason: payload.otherReason || "",
+        otherRealName: payload.otherRealName || ""
       });
 
       await fetch(GAS_URL, {
@@ -392,7 +405,13 @@
       const btn = document.getElementById('btnOther');
       if (btn.disabled) return;
 
+      const realName = document.getElementById('otherName').value.trim();
       const text = document.getElementById('otherReason').value.trim();
+
+      if (!realName) {
+        alert("お名前をご記入ください");
+        return;
+      }
       if (!text) {
         alert("内容をご記入ください");
         return;
@@ -405,10 +424,11 @@
       try {
         await postChange({
           changeType: "その他",
-          otherReason: text
+          otherReason: text,
+          otherRealName: realName
         });
 
-        const msg = "【ご連絡を受付けました】\n氏名：" + currentProfile.displayName
+        const msg = "【ご連絡を受付けました】\nお名前：" + realName
                   + "\n内容：" + text
                   + "\n\n事務局で確認次第ご連絡いたします。";
         await showCompleteManualClose(msg);
