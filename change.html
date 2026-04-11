@@ -146,7 +146,7 @@
     <div id="screen2c" class="screen">
       <h2>その他のご連絡</h2>
       <p style="font-size:14px; color:#666; margin-bottom:10px;">内容をご記入ください（必須）</p>
-      <textarea id="otherReason" placeholder="例：氏名変更をお願いします"></textarea>
+      <textarea id="otherReason"></textarea>
       <button id="btnOther" class="btn" onclick="submitOther()">送信する</button>
       <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
     </div>
@@ -166,7 +166,7 @@
         まだ部会登録がされていないか、既に退会済みです。<br><br>
         新規登録は最初の登録フォームから行ってください。
       </div>
-      <button class="btn" onclick="liff.closeWindow()">閉じる</button>
+      <button class="btn" onclick="goToRegister()">新規部会登録へ進む</button>
     </div>
 
   </div>
@@ -187,6 +187,12 @@
     function showScreen(id) {
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       document.getElementById(id).classList.add('active');
+    }
+
+    // ===== 新規登録フォームへ遷移 =====
+    function goToRegister() {
+      // 既存の登録用LIFFに遷移
+      window.location.href = "https://liff.line.me/2009263353-C0dh9qJf";
     }
 
     // ===== JSONPでGAS GET呼び出し =====
