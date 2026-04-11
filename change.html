@@ -151,12 +151,20 @@
       <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
     </div>
 
-    <!-- ===== 画面3: 完了 ===== -->
+    <!-- ===== 画面3: 完了（間違い/変更追加/退会用・自動閉じる） ===== -->
     <div id="screen3" class="screen">
       <div class="complete-msg">
         ご協力頂き<br>有難うございます
       </div>
       <p class="note">この画面は自動で閉じます</p>
+    </div>
+
+    <!-- ===== 画面3C: 完了（その他用・手動で閉じる） ===== -->
+    <div id="screen3c" class="screen">
+      <div class="complete-msg">
+        頂いた内容を確認次第<br>追ってご連絡します
+      </div>
+      <button class="btn" onclick="liff.closeWindow()">この画面を閉じる</button>
     </div>
 
     <!-- ===== 画面E: 未登録エラー ===== -->
@@ -294,7 +302,7 @@
       });
     }
 
-    // ===== 完了画面表示→自動クローズ =====
+    // ===== 完了画面表示→自動クローズ（間違い/変更追加/退会用） =====
     async function showCompleteAndClose(lineMessage) {
       showScreen('screen3');
       try {
@@ -305,6 +313,17 @@
       setTimeout(() => {
         try { liff.closeWindow(); } catch(e) {}
       }, 2500);
+    }
+
+    // ===== 完了画面表示（その他用・手動クローズ） =====
+    async function showCompleteManualClose(lineMessage) {
+      showScreen('screen3c');
+      try {
+        if (lineMessage) {
+          await liff.sendMessages([{ type: 'text', text: lineMessage }]);
+        }
+      } catch(e) { /* 無視 */ }
+      // 自動クローズしない。ユーザーがボタンを押して閉じる。
     }
 
     // ===== 2A: 部会再選択送信 =====
@@ -392,7 +411,7 @@
         const msg = "【ご連絡を受付けました】\n氏名：" + currentProfile.displayName
                   + "\n内容：" + text
                   + "\n\n事務局で確認次第ご連絡いたします。";
-        await showCompleteAndClose(msg);
+        await showCompleteManualClose(msg);
 
       } catch(err) {
         alert("送信エラー: " + (err && err.message ? err.message : err));
