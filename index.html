@@ -31,7 +31,7 @@
 　　<label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
 　　<label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
 
-    <button id="submitBtn" class="btn" onclick="submitSurvey()">この内容で登録する</button>
+    <button id="submitBtn" class="btn" onclick="submitSurvey()" disabled>確認中...</button>
     <p class="note" id="note">※登録後、LINEトーク画面に自動送信されます。</p>
 
     <div class="locked" id="lockedBox">このアカウントは既に回答済みです。再入力はできません。</div>
@@ -120,19 +120,30 @@
 
         if (result && result.answered) {
           lockUI("このアカウントは既に回答済みです。再入力はできません。必要があれば商工会へご連絡ください。");
+        } else {
+          btn.disabled = false;
+          btn.innerText = "この内容で登録する";
         }
       })
       .catch(err => {
         alert("LIFF初期化/判定エラー: " + (err?.message || err));
         log("init error: " + (err?.message || err));
+        btn.innerText = "再読み込みしてください";
+        btn.disabled = false;
       });
 
     // ===== 送信 =====
+    let isSubmitting = false;
     async function submitSurvey() {
+      if (isSubmitting) return;
+      if (btn.disabled) return;
+      isSubmitting = true;
+
       const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
 
       if (selected.length === 0) {
         alert("少なくとも1つの部会を選択してください。");
+        isSubmitting = false;
         return;
       }
 
@@ -178,6 +189,7 @@
         log("send error: " + (err?.message || err));
         btn.disabled = false;
         btn.innerText = "この内容で登録する";
+        isSubmitting = false;
       }
     }
   </script>
