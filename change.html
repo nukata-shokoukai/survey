@@ -136,6 +136,7 @@
       <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
       <label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
       <label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
+      <label class="option"><input type="checkbox" name="bukai" value="所属なし"> 所属なし</label>
 
       <button id="btnChange" class="btn" onclick="submitChange()">この内容で変更する</button>
       <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
@@ -277,6 +278,21 @@
       el.addEventListener('change', () => {
         selectedReason = el.value;
         document.getElementById('btnNext').disabled = false;
+      });
+    });
+
+    // ===== 画面2A: 排他制御（「所属なし」と他部会の相互解除） =====
+    document.querySelectorAll('input[name="bukai"]').forEach(el => {
+      el.addEventListener('change', (e) => {
+        if (!e.target.checked) return;
+        if (e.target.value === '所属なし') {
+          document.querySelectorAll('input[name="bukai"]').forEach(other => {
+            if (other.value !== '所属なし') other.checked = false;
+          });
+        } else {
+          const none = document.querySelector('input[name="bukai"][value="所属なし"]');
+          if (none) none.checked = false;
+        }
       });
     });
 

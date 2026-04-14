@@ -30,6 +30,7 @@
 　　<label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
 　　<label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
 　　<label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
+　　<label class="option"><input type="checkbox" name="bukai" value="所属なし"> 所属なし</label>
 
     <button id="submitBtn" class="btn" onclick="submitSurvey()" disabled>確認中...</button>
     <p class="note" id="note">※登録後、LINEトーク画面に自動送信されます。</p>
@@ -131,6 +132,21 @@
         btn.innerText = "再読み込みしてください";
         btn.disabled = false;
       });
+
+    // ===== 排他制御：「所属なし」と他部会の相互解除 =====
+    document.querySelectorAll('input[name="bukai"]').forEach(el => {
+      el.addEventListener('change', (e) => {
+        if (!e.target.checked) return;
+        if (e.target.value === '所属なし') {
+          document.querySelectorAll('input[name="bukai"]').forEach(other => {
+            if (other.value !== '所属なし') other.checked = false;
+          });
+        } else {
+          const none = document.querySelector('input[name="bukai"][value="所属なし"]');
+          if (none) none.checked = false;
+        }
+      });
+    });
 
     // ===== 送信 =====
     let isSubmitting = false;
