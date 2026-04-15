@@ -332,26 +332,18 @@
     }
 
     // ===== 完了画面表示→自動クローズ（間違い/変更追加/退会用） =====
-    async function showCompleteAndClose(lineMessage) {
+    // ★完了通知メッセージは GAS v9 側で Push 送信（LIFF context 非依存）
+    async function showCompleteAndClose() {
       showScreen('screen3');
-      try {
-        if (lineMessage) {
-          await liff.sendMessages([{ type: 'text', text: lineMessage }]);
-        }
-      } catch(e) { /* 無視 */ }
       setTimeout(() => {
         try { liff.closeWindow(); } catch(e) {}
       }, 2500);
     }
 
     // ===== 完了画面表示（その他用・手動クローズ） =====
-    async function showCompleteManualClose(lineMessage) {
+    // ★完了通知メッセージは GAS v9 側で Push 送信（LIFF context 非依存）
+    async function showCompleteManualClose() {
       showScreen('screen3c');
-      try {
-        if (lineMessage) {
-          await liff.sendMessages([{ type: 'text', text: lineMessage }]);
-        }
-      } catch(e) { /* 無視 */ }
       // 自動クローズしない。ユーザーがボタンを押して閉じる。
     }
 
@@ -377,10 +369,8 @@
           newBukai: selected.join(", ")
         });
 
-        const msg = "【部会登録を変更しました】\n氏名：" + currentProfile.displayName
-                  + "\n新しい所属：" + selected.join(", ")
-                  + "\n\nご協力ありがとうございました。";
-        await showCompleteAndClose(msg);
+        // ★完了通知は GAS v9 で Push 送信
+        await showCompleteAndClose();
 
       } catch(err) {
         alert("送信エラー: " + (err && err.message ? err.message : err));
@@ -403,9 +393,8 @@
       try {
         await postChange({ changeType: "退会" });
 
-        const msg = "【退会処理完了】\n氏名：" + currentProfile.displayName
-                  + "\n\n部会配信を停止しました。ご利用ありがとうございました。";
-        await showCompleteAndClose(msg);
+        // ★完了通知は GAS v9 で Push 送信
+        await showCompleteAndClose();
 
       } catch(err) {
         alert("送信エラー: " + (err && err.message ? err.message : err));
@@ -444,10 +433,8 @@
           otherRealName: realName
         });
 
-        const msg = "【ご連絡を受付けました】\nお名前：" + realName
-                  + "\n内容：" + text
-                  + "\n\n事務局で確認次第ご連絡いたします。";
-        await showCompleteManualClose(msg);
+        // ★完了通知は GAS v9 で Push 送信（本人＋事務局）
+        await showCompleteManualClose();
 
       } catch(err) {
         alert("送信エラー: " + (err && err.message ? err.message : err));
