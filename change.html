@@ -398,6 +398,17 @@
       const requireName = (selectedReason === "間違い") || isNewApprovalRequest;
 
       if (requireName) {
+        // v6.6: タイトル・説明文を動的切り替え（役員会昇格 vs 抑止力のみ）
+        const titleEl = document.querySelector('#screen2aName h2');
+        const noticeEl = document.querySelector('#screen2aName .warn-box');
+        if (isNewApprovalRequest) {
+          if (titleEl) titleEl.innerHTML = '役員会への登録申請<br><small style="color:#666;">（事務局の承認が必要です）</small>';
+          if (noticeEl) noticeEl.innerHTML = '役員会は機密性の高い情報を扱うため、事務局による本人確認を行います。<br>お手数ですが<strong>お名前（フルネーム）</strong>をご記入ください。';
+        } else {
+          if (titleEl) titleEl.innerHTML = 'お名前のご記入<br><small style="color:#666;">（部会変更の本人確認）</small>';
+          if (noticeEl) noticeEl.innerHTML = '誤操作防止のため、<br>部会変更には<strong>お名前（フルネーム）</strong>のご記入をお願いしております。';
+        }
+
         showScreen('screen2aName');
         setTimeout(function() {
           const input = document.getElementById('changeRealName');
