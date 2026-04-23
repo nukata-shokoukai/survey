@@ -14,28 +14,54 @@
     .option input { margin-right: 15px; transform: scale(1.4); }
     .btn { display: block; width: 100%; padding: 16px; background: #00B900; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; margin-top: 18px; cursor: pointer; }
     .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-secondary { background: #888; }
     .note { font-size: 12px; color: #666; margin-top: 12px; text-align: center; }
+    .notice { background:#fff8e5; border:1px solid #ffcc33; padding:12px; border-radius:10px; font-size:13px; color:#665; margin-bottom:16px; line-height:1.6; }
+    .input-field { display: block; width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 10px; font-size: 16px; margin-top: 8px; box-sizing: border-box; }
+    .input-field:focus { border-color: #00B900; outline: none; }
+    .field-label { font-size: 13px; color: #333; font-weight: bold; margin-top: 12px; display: block; }
     .locked { background:#fff6f6; border:2px solid #ffcccc; padding:12px; border-radius:12px; margin-top:12px; font-size:13px; color:#aa0000; text-align:center; display:none; }
     .locked.show { display:block; }
     .debug { margin-top: 12px; padding: 10px; border-radius: 10px; background: #111; color: #0f0; font-size: 11px; white-space: pre-wrap; display:none; }
     .debug.show { display:block; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2 id="title">所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
+    <!-- ===== 画面1：部会選択 ===== -->
+    <div id="screen1">
+      <h2 id="title">所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
 
-    <label class="option"><input type="checkbox" name="bukai" value="役員会"> 役員会</label>
-　　<label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
-　　<label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
-　　<label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
-　　<label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
-　　<label class="option"><input type="checkbox" name="bukai" value="所属なし"> 所属なし</label>
+      <label class="option"><input type="checkbox" name="bukai" value="役員会"> 役員会</label>
+      <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
+      <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
+      <label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
+      <label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
+      <label class="option"><input type="checkbox" name="bukai" value="所属なし"> 所属なし</label>
 
-    <button id="submitBtn" class="btn" onclick="submitSurvey()" disabled>確認中...</button>
-    <p class="note" id="note">※登録後、LINEトーク画面に自動送信されます。</p>
+      <button id="submitBtn" class="btn" onclick="onScreen1Submit()" disabled>確認中...</button>
+      <p class="note" id="note">※登録後、LINEトーク画面に自動送信されます。</p>
 
-    <div class="locked" id="lockedBox">このアカウントは既に回答済みです。再入力はできません。</div>
+      <div class="locked" id="lockedBox">このアカウントは既に回答済みです。再入力はできません。</div>
+    </div>
+
+    <!-- ===== 画面2：役員会申告氏名入力 ===== -->
+    <div id="screen2" class="hidden">
+      <h2>役員会への登録申請<br><small style="color:#666;">（事務局の承認が必要です）</small></h2>
+
+      <div class="notice">
+        役員会は機密性の高い情報を扱うため、事務局による本人確認を行います。<br>
+        お手数ですが<strong>お名前（フルネーム）</strong>をご記入ください。
+      </div>
+
+      <label class="field-label" for="realNameInput">お名前（フルネーム）</label>
+      <input type="text" id="realNameInput" class="input-field" placeholder="例：松堂 哲也" autocomplete="name" />
+
+      <button id="submitBtn2" class="btn" onclick="submitWithName()">この内容で送信</button>
+      <button class="btn btn-secondary" onclick="backToScreen1()">戻る</button>
+    </div>
+
     <pre id="debug" class="debug"></pre>
   </div>
 
@@ -43,14 +69,19 @@
     // ===== 設定（ここだけ変えればOK）=====
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzNnOGePUruqSAa0vVESipISx3Nr8PxUzEAlkVtVElIr2dgbm8I4uNqexo256bNQm96/exec";
     const LIFF_ID = "2009263353-C0dh9qJf";
-    const DEBUG = false; // trueにすると画面下にログ表示
+    const APPROVAL_REQUIRED_BUKAI = ["役員会"]; // GAS側と同じ
+    const DEBUG = false;
     // ===================================
 
     const btn = document.getElementById("submitBtn");
+    const btn2 = document.getElementById("submitBtn2");
     const lockedBox = document.getElementById("lockedBox");
     const title = document.getElementById("title");
     const note = document.getElementById("note");
     const debugEl = document.getElementById("debug");
+    const screen1 = document.getElementById("screen1");
+    const screen2 = document.getElementById("screen2");
+    const realNameInput = document.getElementById("realNameInput");
 
     if (DEBUG) debugEl.classList.add("show");
     const log = (m) => {
@@ -115,7 +146,6 @@
 
         log("profile OK userId=" + userId);
 
-        // ★ここで「回答済みならロック」
         const result = await checkAnsweredViaJSONP(userId);
         log("check result=" + JSON.stringify(result));
 
@@ -148,40 +178,76 @@
       });
     });
 
-    // ===== 送信 =====
-    let isSubmitting = false;
-    async function submitSurvey() {
-      if (isSubmitting) return;
+    // ===== 画面1：送信ボタン押下 → 役員会含むか判定 =====
+    function onScreen1Submit() {
       if (btn.disabled) return;
-      isSubmitting = true;
 
       const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
 
       if (selected.length === 0) {
         alert("少なくとも1つの部会を選択してください。");
-        isSubmitting = false;
         return;
       }
 
+      // 役員会が含まれているか判定
+      const hasApproval = selected.some(b => APPROVAL_REQUIRED_BUKAI.indexOf(b) !== -1);
+
+      if (hasApproval) {
+        // 画面2（氏名入力）へ遷移
+        screen1.classList.add("hidden");
+        screen2.classList.remove("hidden");
+        setTimeout(() => realNameInput.focus(), 100);
+      } else {
+        // 通常フロー：そのまま送信
+        submitSurvey(selected, "");
+      }
+    }
+
+    // ===== 画面2：戻る =====
+    function backToScreen1() {
+      screen2.classList.add("hidden");
+      screen1.classList.remove("hidden");
+    }
+
+    // ===== 画面2：氏名入力後の送信 =====
+    function submitWithName() {
+      const realName = realNameInput.value.trim();
+      if (!realName) {
+        alert("お名前をご記入ください。");
+        realNameInput.focus();
+        return;
+      }
+      if (realName.length < 2) {
+        alert("お名前が短すぎます。フルネームをご記入ください。");
+        realNameInput.focus();
+        return;
+      }
+
+      const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
+      submitSurvey(selected, realName);
+    }
+
+    // ===== 送信本体 =====
+    let isSubmitting = false;
+    async function submitSurvey(selected, realName) {
+      if (isSubmitting) return;
+      isSubmitting = true;
+
       btn.disabled = true;
       btn.innerText = "登録中...";
+      btn2.disabled = true;
+      btn2.innerText = "登録中...";
 
       try {
         const profile = await liff.getProfile();
-        const postData = {
+        const body = new URLSearchParams({
           userId: profile.userId,
           name: profile.displayName,
-          bukai: selected.join(", ")
-        };
-
-        // ★フォーム送信（GAS側がe.parameterで受けるため）
-        const body = new URLSearchParams({
-          userId: postData.userId,
-          name: postData.name,
-          bukai: postData.bukai
+          bukai: selected.join(", "),
+          realName: realName || ""
         });
 
-        log("POST start");
+        log("POST start realName=" + realName);
 
         await fetch(GAS_URL, {
           method: "POST",
@@ -192,7 +258,7 @@
 
         log("POST done");
 
-        // ★完了通知メッセージは GAS v9 側で Push 送信（LIFF context 非依存）
+        // 完了通知は GAS 側 notifyUser_ が Push 送信
         liff.closeWindow();
 
       } catch (err) {
@@ -200,6 +266,8 @@
         log("send error: " + (err?.message || err));
         btn.disabled = false;
         btn.innerText = "この内容で登録する";
+        btn2.disabled = false;
+        btn2.innerText = "この内容で送信";
         isSubmitting = false;
       }
     }
