@@ -311,7 +311,7 @@
       }
     }
 
-    // ===== 共通: GASへ変更リクエスト送信 =====
+    // ===== 共通: GASへ変更リクエスト送信（v6.3: レスポンス返却） =====
     async function postChange(payload) {
       const body = new URLSearchParams({
         action: "change",
@@ -323,12 +323,19 @@
         otherRealName: payload.otherRealName || ""
       });
 
-      await fetch(GAS_URL, {
+      const res = await fetch(GAS_URL, {
         method: "POST",
         mode: "cors",
         cache: "no-store",
         body
       });
+
+      // v6.3: レスポンスをJSON parseして呼び出し元へ返却（エラー判定用）
+      try {
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
     }
 
     // ===== 完了画面表示→自動クローズ（間違い/変更追加/退会用） =====
@@ -364,10 +371,19 @@
       btn.innerText = "送信中...";
 
       try {
-        await postChange({
+        const result = await postChange({
           changeType: selectedReason,
           newBukai: selected.join(", ")
         });
+
+        // v6.3: エラーレスポンス確認（pending中の役員会変更等）
+        if (result && result.result === "error") {
+          alert(result.message || "変更に失敗しました。時間をおいて再度お試しください。");
+          btn.disabled = false;
+          btn.innerText = "この内容で変更する";
+          isSubmitting = false;
+          return;
+        }
 
         // ★完了通知は GAS v9 で Push 送信
         await showCompleteAndClose();
@@ -391,7 +407,16 @@
       btn.innerText = "送信中...";
 
       try {
-        await postChange({ changeType: "退会" });
+        const result = await postChange({ changeType: "退会" });
+
+        // v6.3: エラーレスポンス確認
+        if (result && result.result === "error") {
+          alert(result.message || "退会処理に失敗しました。時間をおいて再度お試しください。");
+          btn.disabled = false;
+          btn.innerText = "退会する";
+          isSubmitting = false;
+          return;
+        }
 
         // ★完了通知は GAS v9 で Push 送信
         await showCompleteAndClose();
@@ -427,11 +452,20 @@
       btn.innerText = "送信中...";
 
       try {
-        await postChange({
+        const result = await postChange({
           changeType: "その他",
           otherReason: text,
           otherRealName: realName
         });
+
+        // v6.3: エラーレスポンス確認
+        if (result && result.result === "error") {
+          alert(result.message || "送信に失敗しました。時間をおいて再度お試しください。");
+          btn.disabled = false;
+          btn.innerText = "送信する";
+          isSubmitting = false;
+          return;
+        }
 
         // ★完了通知は GAS v9 で Push 送信（本人＋事務局）
         await showCompleteManualClose();
