@@ -18,8 +18,9 @@
       font-size: 14px;
       line-height: 1.6;
     }
-    .current-box .label { color: #666; font-size: 12px; margin-bottom: 4px; }
-    .current-box .value { font-weight: bold; font-size: 16px; color: #222; }
+    .current-box .row { margin-bottom: 6px; }
+    .current-box .label { color: #666; font-size: 12px; }
+    .current-box .value { font-weight: bold; font-size: 15px; color: #222; }
     .option {
       display: flex;
       align-items: center;
@@ -108,64 +109,48 @@
       <div class="loading">読み込み中...<br>少々お待ちください</div>
     </div>
 
-    <!-- ===== 画面1: 変更理由選択 ===== -->
+    <!-- ===== 画面1: 変更理由選択（3択） ===== -->
     <div id="screen1" class="screen">
       <h2>部会登録の変更</h2>
 
       <div class="current-box">
-        <div class="label">現在の所属部会</div>
-        <div class="value" id="currentBukai">-</div>
+        <div class="row"><span class="label">お名前：</span><span class="value" id="currentName">-</span></div>
+        <div class="row"><span class="label">屋号：</span><span class="value" id="currentCompany">-</span></div>
+        <div class="row"><span class="label">現在の所属部会：</span><span class="value" id="currentBukai">-</span></div>
       </div>
 
-      <p style="font-size:15px; margin-bottom:12px;">変更の理由を選んでください：</p>
+      <p style="font-size:15px; margin-bottom:12px;">ご希望の手続きを選んでください：</p>
 
-      <label class="option"><input type="radio" name="reason" value="間違い"> 部会を間違えた</label>
-      <label class="option"><input type="radio" name="reason" value="変更追加"> 部会の変更・追加</label>
-      <label class="option"><input type="radio" name="reason" value="退会"> 退会する</label>
-      <label class="option"><input type="radio" name="reason" value="その他"> その他</label>
+      <label class="option"><input type="radio" name="reason" value="修正"> 所属部会の修正</label>
+      <label class="option"><input type="radio" name="reason" value="解除"> 全ての部会を解除する</label>
+      <label class="option"><input type="radio" name="reason" value="その他"> その他（お問い合わせ）</label>
 
-      <button id="btnNext" class="btn" onclick="goToNext()" disabled>次へ</button>
+      <button id="btnNext" class="btn" onclick="goToNext()" disabled>次へ進む</button>
     </div>
 
-    <!-- ===== 画面2A: 部会再選択 ===== -->
+    <!-- ===== 画面2A: 部会再選択（役員会なし・5択） ===== -->
     <div id="screen2a" class="screen">
       <h2>新しい所属部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
 
-      <label class="option"><input type="checkbox" name="bukai" value="役員会"> 役員会</label>
       <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
       <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
       <label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
       <label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
       <label class="option"><input type="checkbox" name="bukai" value="所属なし"> 所属なし</label>
 
-      <button id="btnChange" class="btn" onclick="onScreen2aSubmit()">この内容で変更する</button>
+      <button id="btnChange" class="btn" onclick="onScreen2aSubmit()">この内容で修正する</button>
       <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
+      <p class="note">※役員会への所属は事務局で付与されます。</p>
     </div>
 
-    <!-- ===== 画面2A-2: 役員会昇格時の氏名入力（v6.4） ===== -->
-    <div id="screen2aName" class="screen">
-      <h2>役員会への登録申請<br><small style="color:#666;">（事務局の承認が必要です）</small></h2>
-
-      <div class="warn-box" style="background:#fff8e5; border-color:#ffcc33; color:#665;">
-        役員会は機密性の高い情報を扱うため、事務局による本人確認を行います。<br>
-        お手数ですが<strong>お名前（フルネーム）</strong>をご記入ください。
-      </div>
-
-      <p style="font-size:14px; color:#666; margin:14px 0 6px;">お名前（フルネーム）</p>
-      <input type="text" id="changeRealName" class="text-input" placeholder="例：山田 太郎" autocomplete="name" />
-
-      <button id="btnChange2" class="btn" onclick="submitChangeWithName()">この内容で送信</button>
-      <button class="btn btn-back" onclick="showScreen('screen2a')">戻る</button>
-    </div>
-
-    <!-- ===== 画面2B: 退会確認 ===== -->
+    <!-- ===== 画面2B: 全部会解除確認 ===== -->
     <div id="screen2b" class="screen">
-      <h2>退会の確認</h2>
+      <h2>全ての部会解除の確認</h2>
       <div class="warn-box">
-        退会で登録してよろしいですか？<br><br>
+        全ての部会を解除してよろしいですか？<br><br>
         現在所属している部会のLINE配信が届かなくなります。
       </div>
-      <button id="btnLeave" class="btn btn-danger" onclick="submitLeave()">退会する</button>
+      <button id="btnLeave" class="btn btn-danger" onclick="submitLeave()">全ての部会を解除する</button>
       <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
     </div>
 
@@ -180,7 +165,7 @@
       <button class="btn btn-back" onclick="showScreen('screen1')">戻る</button>
     </div>
 
-    <!-- ===== 画面3: 完了（間違い/変更追加/退会用・自動閉じる） ===== -->
+    <!-- ===== 画面3: 完了（修正/解除・自動閉じる） ===== -->
     <div id="screen3" class="screen">
       <div class="complete-msg">
         ご協力頂き<br>有難うございます
@@ -200,7 +185,7 @@
     <div id="screenNoData" class="screen">
       <h2>登録情報がありません</h2>
       <div class="warn-box">
-        まだ部会登録がされていないか、既に退会済みです。<br><br>
+        まだ部会登録がされていないか、既に解除済みです。<br><br>
         新規登録は最初の登録フォームから行ってください。
       </div>
       <button class="btn" onclick="goToRegister()">新規部会登録へ進む</button>
@@ -212,7 +197,6 @@
     // ===== 設定 =====
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzNnOGePUruqSAa0vVESipISx3Nr8PxUzEAlkVtVElIr2dgbm8I4uNqexo256bNQm96/exec";
     const LIFF_ID = "2009263353-vU7GDgRR";
-    const APPROVAL_REQUIRED_BUKAI = ["役員会"]; // GAS 側と同じ
     // =================
 
     // グローバル状態
@@ -229,7 +213,6 @@
 
     // ===== 新規登録フォームへ遷移 =====
     function goToRegister() {
-      // 既存の登録用LIFFに遷移
       window.location.href = "https://liff.line.me/2009263353-C0dh9qJf";
     }
 
@@ -280,7 +263,9 @@
 
         if (result && result.found) {
           currentData = result;
-          document.getElementById("currentBukai").textContent = result.bukai || "（登録なし）";
+          document.getElementById("currentName").textContent = result.name || "（未登録）";
+          document.getElementById("currentCompany").textContent = result.company || "（未登録）";
+          document.getElementById("currentBukai").textContent = result.bukai || "（所属なし）";
           showScreen('screen1');
         } else {
           showScreen('screenNoData');
@@ -313,32 +298,31 @@
       });
     });
 
-    // ===== 画面1→画面2 分岐 =====
+    // ===== 画面1→画面2 分岐（3択） =====
     function goToNext() {
       if (!selectedReason) {
-        alert("理由を選んでください");
+        alert("ご希望の手続きを選んでください。");
         return;
       }
-      if (selectedReason === "間違い" || selectedReason === "変更追加") {
+      if (selectedReason === "修正") {
         showScreen('screen2a');
-      } else if (selectedReason === "退会") {
+      } else if (selectedReason === "解除") {
         showScreen('screen2b');
       } else if (selectedReason === "その他") {
         showScreen('screen2c');
       }
     }
 
-    // ===== 共通: GASへ変更リクエスト送信（v6.4: realName 対応） =====
+    // ===== 共通: GASへ変更リクエスト送信 =====
     async function postChange(payload) {
       const body = new URLSearchParams({
         action: "change",
         userId: currentProfile.userId,
-        name: currentProfile.displayName,
+        lineName: currentProfile.displayName,
         changeType: payload.changeType,
         newBukai: payload.newBukai || "",
         otherReason: payload.otherReason || "",
-        otherRealName: payload.otherRealName || "",
-        realName: payload.realName || "" // v6.4: 役員会昇格時の申告氏名
+        otherRealName: payload.otherRealName || ""
       });
 
       const res = await fetch(GAS_URL, {
@@ -355,8 +339,7 @@
       }
     }
 
-    // ===== 完了画面表示→自動クローズ（間違い/変更追加/退会用） =====
-    // ★完了通知メッセージは GAS v9 側で Push 送信（LIFF context 非依存）
+    // ===== 完了画面表示→自動クローズ（修正/解除用） =====
     async function showCompleteAndClose() {
       showScreen('screen3');
       setTimeout(() => {
@@ -365,13 +348,11 @@
     }
 
     // ===== 完了画面表示（その他用・手動クローズ） =====
-    // ★完了通知メッセージは GAS v9 側で Push 送信（LIFF context 非依存）
     async function showCompleteManualClose() {
       showScreen('screen3c');
-      // 自動クローズしない。ユーザーがボタンを押して閉じる。
     }
 
-    // ===== 2A: 部会再選択送信 → 役員会昇格判定 =====
+    // ===== 2A: 部会再選択送信（修正） =====
     function onScreen2aSubmit() {
       const btn = document.getElementById('btnChange');
       if (btn.disabled || isSubmitting) return;
@@ -382,87 +363,26 @@
         return;
       }
 
-      // v6.4: 役員会昇格判定
-      const hasApproval = selected.some(function(b) {
-        return APPROVAL_REQUIRED_BUKAI.indexOf(b) !== -1;
-      });
-      const currentBukaiList = String(currentData && currentData.bukai || "")
-                                .split(",").map(function(s) { return s.trim(); });
-      const alreadyApproved = APPROVAL_REQUIRED_BUKAI.some(function(b) {
-        return currentBukaiList.indexOf(b) !== -1;
-      });
-      const isNewApprovalRequest = hasApproval && !alreadyApproved;
-
-      // v6.5: 「部会を間違えた」は抑止力として常に氏名入力必須
-      //       「変更・追加」は役員会昇格時のみ氏名入力
-      const requireName = (selectedReason === "間違い") || isNewApprovalRequest;
-
-      if (requireName) {
-        // v6.6: タイトル・説明文を動的切り替え（役員会昇格 vs 抑止力のみ）
-        const titleEl = document.querySelector('#screen2aName h2');
-        const noticeEl = document.querySelector('#screen2aName .warn-box');
-        if (isNewApprovalRequest) {
-          if (titleEl) titleEl.innerHTML = '役員会への登録申請<br><small style="color:#666;">（事務局の承認が必要です）</small>';
-          if (noticeEl) noticeEl.innerHTML = '役員会は機密性の高い情報を扱うため、事務局による本人確認を行います。<br>お手数ですが<strong>お名前（フルネーム）</strong>をご記入ください。';
-        } else {
-          if (titleEl) titleEl.innerHTML = 'お名前のご記入<br><small style="color:#666;">（部会変更の本人確認）</small>';
-          if (noticeEl) noticeEl.innerHTML = '誤操作防止のため、<br>部会変更には<strong>お名前（フルネーム）</strong>のご記入をお願いしております。';
-        }
-
-        showScreen('screen2aName');
-        setTimeout(function() {
-          const input = document.getElementById('changeRealName');
-          if (input) input.focus();
-        }, 100);
-        return;
-      }
-
-      // 氏名入力不要 → 直接送信
-      submitChangeInternal(selected, "");
+      submitChangeInternal(selected);
     }
 
-    // ===== 2A-2: 氏名入力後の送信 =====
-    function submitChangeWithName() {
-      const btn = document.getElementById('btnChange2');
-      if (btn.disabled || isSubmitting) return;
-
-      const realName = document.getElementById('changeRealName').value.trim();
-      if (!realName) {
-        alert("お名前をご記入ください。");
-        document.getElementById('changeRealName').focus();
-        return;
-      }
-      if (realName.length < 2) {
-        alert("お名前が短すぎます。フルネームをご記入ください。");
-        document.getElementById('changeRealName').focus();
-        return;
-      }
-
-      const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
-      submitChangeInternal(selected, realName);
-    }
-
-    // ===== 送信本体 =====
-    async function submitChangeInternal(selected, realName) {
+    // ===== 送信本体（修正） =====
+    async function submitChangeInternal(selected) {
       if (isSubmitting) return;
       const btn = document.getElementById('btnChange');
-      const btn2 = document.getElementById('btnChange2');
 
       isSubmitting = true;
       if (btn) { btn.disabled = true; btn.innerText = "送信中..."; }
-      if (btn2) { btn2.disabled = true; btn2.innerText = "送信中..."; }
 
       try {
         const result = await postChange({
-          changeType: selectedReason,
-          newBukai: selected.join(", "),
-          realName: realName || ""
+          changeType: "修正",
+          newBukai: selected.join(", ")
         });
 
         if (result && result.result === "error") {
-          alert(result.message || "変更に失敗しました。時間をおいて再度お試しください。");
-          if (btn) { btn.disabled = false; btn.innerText = "この内容で変更する"; }
-          if (btn2) { btn2.disabled = false; btn2.innerText = "この内容で送信"; }
+          alert(result.message || "修正に失敗しました。時間をおいて再度お試しください。");
+          if (btn) { btn.disabled = false; btn.innerText = "この内容で修正する"; }
           isSubmitting = false;
           return;
         }
@@ -471,13 +391,12 @@
 
       } catch(err) {
         alert("送信エラー: " + (err && err.message ? err.message : err));
-        if (btn) { btn.disabled = false; btn.innerText = "この内容で変更する"; }
-        if (btn2) { btn2.disabled = false; btn2.innerText = "この内容で送信"; }
+        if (btn) { btn.disabled = false; btn.innerText = "この内容で修正する"; }
         isSubmitting = false;
       }
     }
 
-    // ===== 2B: 退会送信 =====
+    // ===== 2B: 全部会解除送信 =====
     async function submitLeave() {
       if (isSubmitting) return;
       const btn = document.getElementById('btnLeave');
@@ -488,24 +407,22 @@
       btn.innerText = "送信中...";
 
       try {
-        const result = await postChange({ changeType: "退会" });
+        const result = await postChange({ changeType: "解除" });
 
-        // v6.3: エラーレスポンス確認
         if (result && result.result === "error") {
-          alert(result.message || "退会処理に失敗しました。時間をおいて再度お試しください。");
+          alert(result.message || "解除処理に失敗しました。時間をおいて再度お試しください。");
           btn.disabled = false;
-          btn.innerText = "退会する";
+          btn.innerText = "全ての部会を解除する";
           isSubmitting = false;
           return;
         }
 
-        // ★完了通知は GAS v9 で Push 送信
         await showCompleteAndClose();
 
       } catch(err) {
         alert("送信エラー: " + (err && err.message ? err.message : err));
         btn.disabled = false;
-        btn.innerText = "退会する";
+        btn.innerText = "全ての部会を解除する";
         isSubmitting = false;
       }
     }
@@ -539,7 +456,6 @@
           otherRealName: realName
         });
 
-        // v6.3: エラーレスポンス確認
         if (result && result.result === "error") {
           alert(result.message || "送信に失敗しました。時間をおいて再度お試しください。");
           btn.disabled = false;
@@ -548,7 +464,6 @@
           return;
         }
 
-        // ★完了通知は GAS v9 で Push 送信（本人＋事務局）
         await showCompleteManualClose();
 
       } catch(err) {

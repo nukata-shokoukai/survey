@@ -19,69 +19,104 @@
     .notice { background:#fff8e5; border:1px solid #ffcc33; padding:12px; border-radius:10px; font-size:13px; color:#665; margin-bottom:16px; line-height:1.6; }
     .input-field { display: block; width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 10px; font-size: 16px; margin-top: 8px; box-sizing: border-box; }
     .input-field:focus { border-color: #00B900; outline: none; }
-    .field-label { font-size: 13px; color: #333; font-weight: bold; margin-top: 12px; display: block; }
+    .field-label { font-size: 14px; color: #333; font-weight: bold; margin-top: 14px; display: block; }
+    .required { color: #cc0000; font-size: 12px; margin-left: 6px; }
     .locked { background:#fff6f6; border:2px solid #ffcccc; padding:12px; border-radius:12px; margin-top:12px; font-size:13px; color:#aa0000; text-align:center; display:none; }
     .locked.show { display:block; }
     .debug { margin-top: 12px; padding: 10px; border-radius: 10px; background: #111; color: #0f0; font-size: 11px; white-space: pre-wrap; display:none; }
     .debug.show { display:block; }
     .hidden { display: none; }
+    .welcome { font-size: 14px; color: #555; line-height: 1.7; margin-bottom: 16px; text-align: center; }
   </style>
 </head>
 <body>
   <div class="card">
-    <!-- ===== 画面1：部会選択 ===== -->
-    <div id="screen1">
-      <h2 id="title">所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
 
-      <label class="option"><input type="checkbox" name="bukai" value="役員会"> 役員会</label>
+    <!-- ===== 画面0：会員確認 ===== -->
+    <div id="screen0">
+      <h2>ぬかた商工会 公式LINE<br><small style="color:#666;">（ご登録ありがとうございます）</small></h2>
+
+      <p class="welcome">
+        はじめに、あなたはぬかた商工会の<br>
+        <strong>会員様ですか？</strong>
+      </p>
+
+      <label class="option"><input type="radio" name="isMember" value="yes"> はい（会員です）</label>
+      <label class="option"><input type="radio" name="isMember" value="no"> いいえ（会員ではありません）</label>
+
+      <button id="submitBtn0" class="btn" onclick="onScreen0Submit()" disabled>確認中...</button>
+
+      <div class="locked" id="lockedBox">このアカウントは既に回答済みです。再入力はできません。</div>
+    </div>
+
+    <!-- ===== 画面1：氏名・屋号入力（会員のみ） ===== -->
+    <div id="screen1" class="hidden">
+      <h2>会員情報の入力</h2>
+
+      <div class="notice">
+        事務局での本人確認のため、お名前と屋号をご入力ください。
+      </div>
+
+      <label class="field-label" for="realNameInput">お名前（フルネーム）<span class="required">※必須</span></label>
+      <input type="text" id="realNameInput" class="input-field" placeholder="例：山田 太郎" autocomplete="name" />
+
+      <label class="field-label" for="companyInput">屋号・会社名<span class="required">※必須</span></label>
+      <input type="text" id="companyInput" class="input-field" placeholder="例：山田建築" autocomplete="organization" />
+
+      <button class="btn" onclick="onScreen1Submit()">次へ進む</button>
+      <button class="btn btn-secondary" onclick="backToScreen0()">戻る</button>
+    </div>
+
+    <!-- ===== 画面2：部会選択 ===== -->
+    <div id="screen2" class="hidden">
+      <h2>所属する部会を選択してください<br><small style="color:#666;">（複数選択できます）</small></h2>
+
       <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
       <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
       <label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
       <label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
       <label class="option"><input type="checkbox" name="bukai" value="所属なし"> 所属なし</label>
 
-      <button id="submitBtn" class="btn" onclick="onScreen1Submit()" disabled>確認中...</button>
-      <p class="note" id="note">※登録後、LINEトーク画面に自動送信されます。</p>
-
-      <div class="locked" id="lockedBox">このアカウントは既に回答済みです。再入力はできません。</div>
+      <button id="submitBtn2" class="btn" onclick="onScreen2Submit()">この内容で登録する</button>
+      <button class="btn btn-secondary" onclick="backToScreen1()">戻る</button>
+      <p class="note">※役員会への所属は事務局で付与されます。</p>
     </div>
 
-    <!-- ===== 画面2：役員会申告氏名入力 ===== -->
-    <div id="screen2" class="hidden">
-      <h2>役員会への登録申請<br><small style="color:#666;">（事務局の承認が必要です）</small></h2>
+    <!-- ===== 画面N：非会員向け確認 ===== -->
+    <div id="screenNonMember" class="hidden">
+      <h2>ご登録ありがとうございます</h2>
 
-      <div class="notice">
-        役員会は機密性の高い情報を扱うため、事務局による本人確認を行います。<br>
-        お手数ですが<strong>お名前（フルネーム）</strong>をご記入ください。
-      </div>
+      <p class="welcome">
+        非会員として登録されます。<br>
+        ぬかた商工会から一般情報をお届けいたします。<br><br>
+        入会ご検討の際は事務局までお問い合わせください。
+      </p>
 
-      <label class="field-label" for="realNameInput">お名前（フルネーム）</label>
-      <input type="text" id="realNameInput" class="input-field" placeholder="例：山田 太郎" autocomplete="name" />
-
-      <button id="submitBtn2" class="btn" onclick="submitWithName()">この内容で送信</button>
-      <button class="btn btn-secondary" onclick="backToScreen1()">戻る</button>
+      <button id="submitBtnNonMember" class="btn" onclick="submitNonMember()">この内容で登録する</button>
+      <button class="btn btn-secondary" onclick="backToScreen0()">戻る</button>
     </div>
 
     <pre id="debug" class="debug"></pre>
   </div>
 
   <script>
-    // ===== 設定（ここだけ変えればOK）=====
+    // ===== 設定 =====
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzNnOGePUruqSAa0vVESipISx3Nr8PxUzEAlkVtVElIr2dgbm8I4uNqexo256bNQm96/exec";
     const LIFF_ID = "2009263353-C0dh9qJf";
-    const APPROVAL_REQUIRED_BUKAI = ["役員会"]; // GAS側と同じ
     const DEBUG = false;
     // ===================================
 
-    const btn = document.getElementById("submitBtn");
+    const btn0 = document.getElementById("submitBtn0");
     const btn2 = document.getElementById("submitBtn2");
+    const btnNon = document.getElementById("submitBtnNonMember");
     const lockedBox = document.getElementById("lockedBox");
-    const title = document.getElementById("title");
-    const note = document.getElementById("note");
     const debugEl = document.getElementById("debug");
+    const screen0 = document.getElementById("screen0");
     const screen1 = document.getElementById("screen1");
     const screen2 = document.getElementById("screen2");
+    const screenNon = document.getElementById("screenNonMember");
     const realNameInput = document.getElementById("realNameInput");
+    const companyInput = document.getElementById("companyInput");
 
     if (DEBUG) debugEl.classList.add("show");
     const log = (m) => {
@@ -90,16 +125,14 @@
     };
 
     function lockUI(message) {
-      document.querySelectorAll('input[name="bukai"]').forEach(el => el.disabled = true);
-      btn.disabled = true;
-      btn.innerText = "回答済み";
+      document.querySelectorAll('input[name="isMember"]').forEach(el => el.disabled = true);
+      btn0.disabled = true;
+      btn0.innerText = "回答済み";
       lockedBox.textContent = message || "このアカウントは既に回答済みです。再入力はできません。";
       lockedBox.classList.add("show");
-      title.innerHTML = "既に登録済みです<br><small style='color:#666;'>（再入力できません）</small>";
-      note.textContent = "※必要があれば商工会へご連絡ください。";
     }
 
-    // ===== JSONPで「回答済み」チェック（CORS回避）=====
+    // ===== JSONPで「回答済み」チェック =====
     function checkAnsweredViaJSONP(userId) {
       return new Promise((resolve, reject) => {
         const cbName = "jsonp_cb_" + Math.random().toString(36).slice(2);
@@ -152,18 +185,18 @@
         if (result && result.answered) {
           lockUI("このアカウントは既に回答済みです。再入力はできません。必要があれば商工会へご連絡ください。");
         } else {
-          btn.disabled = false;
-          btn.innerText = "この内容で登録する";
+          btn0.disabled = false;
+          btn0.innerText = "次へ進む";
         }
       })
       .catch(err => {
         alert("LIFF初期化/判定エラー: " + (err?.message || err));
         log("init error: " + (err?.message || err));
-        btn.innerText = "再読み込みしてください";
-        btn.disabled = false;
+        btn0.innerText = "再読み込みしてください";
+        btn0.disabled = false;
       });
 
-    // ===== 排他制御：「所属なし」と他部会の相互解除 =====
+    // ===== 排他制御：「所属なし」と他部会の相互解除（画面2） =====
     document.querySelectorAll('input[name="bukai"]').forEach(el => {
       el.addEventListener('change', (e) => {
         if (!e.target.checked) return;
@@ -178,40 +211,33 @@
       });
     });
 
-    // ===== 画面1：送信ボタン押下 → 役員会含むか判定 =====
-    function onScreen1Submit() {
-      if (btn.disabled) return;
+    // ===== 画面0：会員確認送信 =====
+    function onScreen0Submit() {
+      if (btn0.disabled) return;
 
-      const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
-
-      if (selected.length === 0) {
-        alert("少なくとも1つの部会を選択してください。");
+      const selected = document.querySelector('input[name="isMember"]:checked');
+      if (!selected) {
+        alert("「はい」または「いいえ」を選択してください。");
         return;
       }
 
-      // 役員会が含まれているか判定
-      const hasApproval = selected.some(b => APPROVAL_REQUIRED_BUKAI.indexOf(b) !== -1);
-
-      if (hasApproval) {
-        // 画面2（氏名入力）へ遷移
-        screen1.classList.add("hidden");
-        screen2.classList.remove("hidden");
+      if (selected.value === "yes") {
+        // 会員 → 画面1（氏名・屋号入力）へ
+        screen0.classList.add("hidden");
+        screen1.classList.remove("hidden");
         setTimeout(() => realNameInput.focus(), 100);
       } else {
-        // 通常フロー：そのまま送信
-        submitSurvey(selected, "");
+        // 非会員 → 画面N へ
+        screen0.classList.add("hidden");
+        screenNon.classList.remove("hidden");
       }
     }
 
-    // ===== 画面2：戻る =====
-    function backToScreen1() {
-      screen2.classList.add("hidden");
-      screen1.classList.remove("hidden");
-    }
-
-    // ===== 画面2：氏名入力後の送信 =====
-    function submitWithName() {
+    // ===== 画面1：氏名・屋号入力 → 部会選択へ =====
+    function onScreen1Submit() {
       const realName = realNameInput.value.trim();
+      const company = companyInput.value.trim();
+
       if (!realName) {
         alert("お名前をご記入ください。");
         realNameInput.focus();
@@ -222,19 +248,49 @@
         realNameInput.focus();
         return;
       }
+      if (!company) {
+        alert("屋号・会社名をご記入ください。");
+        companyInput.focus();
+        return;
+      }
 
-      const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
-      submitSurvey(selected, realName);
+      // 画面2（部会選択）へ
+      screen1.classList.add("hidden");
+      screen2.classList.remove("hidden");
     }
 
-    // ===== 送信本体 =====
+    // ===== 画面2：部会選択送信（会員フロー完了） =====
+    function onScreen2Submit() {
+      const selected = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
+
+      if (selected.length === 0) {
+        alert("少なくとも1つの部会を選択してください。");
+        return;
+      }
+
+      const realName = realNameInput.value.trim();
+      const company = companyInput.value.trim();
+      submitMember(realName, company, selected);
+    }
+
+    // ===== 画面遷移：戻る =====
+    function backToScreen0() {
+      screen1.classList.add("hidden");
+      screenNon.classList.add("hidden");
+      screen0.classList.remove("hidden");
+    }
+
+    function backToScreen1() {
+      screen2.classList.add("hidden");
+      screen1.classList.remove("hidden");
+    }
+
+    // ===== 送信：会員フロー =====
     let isSubmitting = false;
-    async function submitSurvey(selected, realName) {
+    async function submitMember(realName, company, bukaiList) {
       if (isSubmitting) return;
       isSubmitting = true;
 
-      btn.disabled = true;
-      btn.innerText = "登録中...";
       btn2.disabled = true;
       btn2.innerText = "登録中...";
 
@@ -242,12 +298,14 @@
         const profile = await liff.getProfile();
         const body = new URLSearchParams({
           userId: profile.userId,
-          name: profile.displayName,
-          bukai: selected.join(", "),
-          realName: realName || ""
+          lineName: profile.displayName,
+          realName: realName,
+          company: company,
+          bukai: bukaiList.join(", "),
+          isMember: "yes"
         });
 
-        log("POST start realName=" + realName);
+        log("POST member start realName=" + realName + " company=" + company);
 
         await fetch(GAS_URL, {
           method: "POST",
@@ -264,10 +322,45 @@
       } catch (err) {
         alert("送信エラー詳細: " + (err?.message || err));
         log("send error: " + (err?.message || err));
-        btn.disabled = false;
-        btn.innerText = "この内容で登録する";
         btn2.disabled = false;
-        btn2.innerText = "この内容で送信";
+        btn2.innerText = "この内容で登録する";
+        isSubmitting = false;
+      }
+    }
+
+    // ===== 送信：非会員フロー =====
+    async function submitNonMember() {
+      if (isSubmitting) return;
+      isSubmitting = true;
+
+      btnNon.disabled = true;
+      btnNon.innerText = "登録中...";
+
+      try {
+        const profile = await liff.getProfile();
+        const body = new URLSearchParams({
+          userId: profile.userId,
+          lineName: profile.displayName,
+          isMember: "no"
+        });
+
+        log("POST non_member start");
+
+        await fetch(GAS_URL, {
+          method: "POST",
+          mode: "cors",
+          cache: "no-store",
+          body
+        });
+
+        log("POST done");
+        liff.closeWindow();
+
+      } catch (err) {
+        alert("送信エラー詳細: " + (err?.message || err));
+        log("send error: " + (err?.message || err));
+        btnNon.disabled = false;
+        btnNon.innerText = "この内容で登録する";
         isSubmitting = false;
       }
     }
