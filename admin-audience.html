@@ -32,6 +32,8 @@
     }
     .option:has(input:checked) { border-color: #00B900; background-color: #f0fff0; }
     .option input { margin-right: 12px; transform: scale(1.4); }
+    .option-disabled { opacity: 0.4; cursor: not-allowed; }
+    .option-disabled input { pointer-events: none; }
     .btn {
       display: block;
       width: 100%;
@@ -98,6 +100,15 @@
       color: #999;
       font-size: 14px;
     }
+    .note-highlight {
+      font-size: 12px;
+      color: #666;
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: #fff8e5;
+      border-left: 3px solid #ffcc33;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -108,24 +119,29 @@
       <div class="loading">読み込み中...<br>少々お待ちください</div>
     </div>
 
-    <!-- ===== 画面1: 部会選択 ===== -->
+    <!-- ===== 画面1: 配信対象選択 ===== -->
     <div id="screen1" class="screen">
       <h2>配信用ユーザーIDリスト取得</h2>
       <div class="desc">
-        配信したい部会を選択してください。<br>
-        複数選択すると、いずれかに所属するメンバーを取得します。
+        配信対象タイプを選択してください。<br>
+        会員向けの場合は追加で部会を指定できます（複数可）。
       </div>
 
-      <h3>配信先部会（複数選択可）</h3>
-      <label class="option"><input type="checkbox" name="bukai" value="役員会"> 役員会</label>
-      <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
-      <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
-      <label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
-      <label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
-      <label class="option"><input type="checkbox" name="bukai" value="所属なし"> 所属なし</label>
+      <h3>配信対象タイプ</h3>
+      <label class="option"><input type="radio" name="memberType" value="member" checked> 会員向け（部会指定可能）</label>
+      <label class="option"><input type="radio" name="memberType" value="non_member"> 非会員向け（加入募集配信用）</label>
+      <label class="option"><input type="radio" name="memberType" value="all"> 全員（会員＋非会員・災害情報等）</label>
 
-      <h3>または</h3>
-      <label class="option"><input type="radio" name="allMode" value="all"> 退会者以外の全員</label>
+      <h3>部会選択<span style="font-size:12px; color:#999; font-weight:normal; margin-left:6px;">（会員向け時のみ・複数可）</span></h3>
+      <div id="bukaiSection">
+        <label class="option"><input type="checkbox" name="bukai" value="役員会"> 役員会</label>
+        <label class="option"><input type="checkbox" name="bukai" value="青年部"> 青年部</label>
+        <label class="option"><input type="checkbox" name="bukai" value="女性部"> 女性部</label>
+        <label class="option"><input type="checkbox" name="bukai" value="食協部"> 食協部</label>
+        <label class="option"><input type="checkbox" name="bukai" value="観光地域化推進協議会"> 観光地域化推進協議会</label>
+        <label class="option"><input type="checkbox" name="bukai" value="所属なし"> 所属なし</label>
+        <div class="note-highlight">※部会を無選択の場合は全会員が対象になります。</div>
+      </div>
 
       <button id="btnFetch" class="btn" onclick="fetchMembers()">リストを取得</button>
     </div>
@@ -135,7 +151,7 @@
       <h2>取得結果</h2>
 
       <div class="result-box">
-        <div class="count-label" id="resultLabel">対象部会</div>
+        <div class="count-label" id="resultLabel">対象</div>
         <div class="count-number"><span id="resultCount">0</span> 名</div>
       </div>
 
@@ -150,7 +166,7 @@
         ⓘ PCの場合：クリックで全選択→Ctrl+Cでコピー
       </div>
 
-      <button class="btn btn-secondary" onclick="backToSelect()">部会選択に戻る</button>
+      <button class="btn btn-secondary" onclick="backToSelect()">配信対象選択に戻る</button>
     </div>
 
     <!-- ===== 画面E: エラー ===== -->
@@ -169,7 +185,7 @@
     // =================
 
     let lastResult = null;
-    let lastBukaiLabel = "";
+    let lastLabel = "";
 
     // ===== 画面切替 =====
     function showScreen(id) {
@@ -203,6 +219,7 @@
           liff.login();
           return;
         }
+        updateBukaiSection();
         showScreen('screen1');
       })
       .catch(err => {
@@ -210,41 +227,49 @@
         showScreen('screenError');
       });
 
-    // ===== 「退会者以外の全員」と部会選択の排他制御 =====
-    document.querySelectorAll('input[name="bukai"]').forEach(el => {
-      el.addEventListener('change', () => {
-        if (el.checked) {
-          document.querySelector('input[name="allMode"]').checked = false;
-        }
+    // ===== 配信対象タイプ変更時：部会セクションの有効/無効切替 =====
+    document.querySelectorAll('input[name="memberType"]').forEach(el => {
+      el.addEventListener('change', updateBukaiSection);
+    });
+
+    function updateBukaiSection() {
+      const memberType = document.querySelector('input[name="memberType"]:checked').value;
+      const section = document.getElementById('bukaiSection');
+      const labels = section.querySelectorAll('label.option');
+      const checkboxes = section.querySelectorAll('input[name="bukai"]');
+
+      const isMemberMode = (memberType === "member");
+
+      labels.forEach(l => {
+        if (isMemberMode) l.classList.remove('option-disabled');
+        else l.classList.add('option-disabled');
       });
-    });
-    document.querySelector('input[name="allMode"]').addEventListener('change', (e) => {
-      if (e.target.checked) {
-        document.querySelectorAll('input[name="bukai"]').forEach(el => el.checked = false);
-      }
-    });
+      checkboxes.forEach(c => {
+        c.disabled = !isMemberMode;
+        if (!isMemberMode) c.checked = false;
+      });
+    }
 
     // ===== リスト取得 =====
     async function fetchMembers() {
       const btn = document.getElementById('btnFetch');
       if (btn.disabled) return;
 
-      const isAll = document.querySelector('input[name="allMode"]').checked;
+      const memberType = document.querySelector('input[name="memberType"]:checked').value;
       const selectedBukai = Array.from(document.querySelectorAll('input[name="bukai"]:checked')).map(el => el.value);
-
-      if (!isAll && selectedBukai.length === 0) {
-        alert("部会を選択するか、「退会者以外の全員」を選んでください");
-        return;
-      }
 
       btn.disabled = true;
       btn.innerText = "取得中...";
 
       try {
-        const params = { action: "getActiveMembers" };
-        if (!isAll) {
+        const params = {
+          action: "getActiveMembers",
+          memberType: memberType
+        };
+        if (memberType === "member" && selectedBukai.length > 0) {
           params.bukai = selectedBukai.join(",");
         }
+
         const result = await jsonpGet(params);
 
         if (!result || !result.members) {
@@ -252,10 +277,20 @@
         }
 
         lastResult = result;
-        lastBukaiLabel = isAll ? "全員" : selectedBukai.join("+");
+
+        // ラベル生成
+        let label = "";
+        if (memberType === "member") {
+          label = selectedBukai.length > 0 ? selectedBukai.join(" または ") : "全会員";
+        } else if (memberType === "non_member") {
+          label = "非会員向け（加入募集）";
+        } else if (memberType === "all") {
+          label = "全員（会員＋非会員）";
+        }
+        lastLabel = label;
 
         // 結果表示
-        document.getElementById('resultLabel').textContent = isAll ? "退会者以外の全員" : selectedBukai.join(" または ");
+        document.getElementById('resultLabel').textContent = label;
         document.getElementById('resultCount').textContent = result.count;
         document.getElementById('resultArea').value = result.members.map(m => m.userId).join("\n");
 
@@ -276,12 +311,13 @@
       const content = lastResult.members.map(m => m.userId).join("\n");
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
 
-      // ファイル名自動生成：配信リスト_{部会名}_{日付}.txt
+      // ファイル名自動生成：配信リスト_{ラベル}_{日付}.txt
       const d = new Date();
       const dateStr = d.getFullYear()
         + ("0" + (d.getMonth() + 1)).slice(-2)
         + ("0" + d.getDate()).slice(-2);
-      const filename = "配信リスト_" + lastBukaiLabel + "_" + dateStr + ".txt";
+      const safeLabel = lastLabel.replace(/[\\\/\:\*\?\"\<\>\|\s]/g, '_');
+      const filename = "配信リスト_" + safeLabel + "_" + dateStr + ".txt";
 
       // ダウンロードリンク作成
       const url = URL.createObjectURL(blob);
@@ -294,7 +330,7 @@
       URL.revokeObjectURL(url);
     }
 
-    // ===== 部会選択に戻る =====
+    // ===== 配信対象選択に戻る =====
     function backToSelect() {
       showScreen('screen1');
     }
